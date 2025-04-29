@@ -1,0 +1,12 @@
+﻿<Application x:Class="MindMap.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MindMap.Converters"
+             StartupUri="Views/MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <local:SelectionToBorderBrushConverter x:Key="SelectionToBorderBrushConverter"/>
+            <local:SelectionToBorderThicknessConverter x:Key="SelectionToBorderThicknessConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
