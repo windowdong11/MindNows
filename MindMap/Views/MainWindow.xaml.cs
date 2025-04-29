@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -96,6 +98,44 @@ namespace MindMap
         {
             base.OnKeyDown(e);
 
+            if (SelectionService.SelectedNode == null)
+                return;
+
+            bool isCtrlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+            Console.WriteLine($"Key: {e.Key}, Ctrl: {isCtrlPressed}");
+
+            if (isCtrlPressed)
+            {
+                if (e.Key == Key.Up)
+                {
+                    MoveNodeUp();
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Down)
+                {
+                    MoveNodeDown();
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Left)
+                {
+                    MoveNodeLeft();
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Right)
+                {
+                    MoveNodeRight();
+                    e.Handled = true;
+                }
+            }
+            else
+            {
+                // 기본 방향키 이동
+                HandleNormalArrowKeys(e);
+            }
+        }
+
+        private void HandleNormalArrowKeys(KeyEventArgs e)
+        {
             if (e.Key == Key.Tab)
             {
                 AddChildNode();
@@ -396,6 +436,199 @@ namespace MindMap
                 TraverseNode(child, collected);
             }
         }
+
+        // 노드 이동
+        private void UpdateNodeControlPosition(MindMapNode node)
+        {
+            var control = FindNodeControl(node);
+            if (control != null)
+            {
+                Canvas.SetLeft(control, node.Position.X);
+                Canvas.SetTop(control, node.Position.Y);
+            }
+
+            _branchManager.UpdateAllBranches(node); // 연결선도 같이 업데이트
+        }
+
+
+        private void MoveNodeUp()
+        {
+            var current = SelectionService.SelectedNode;
+            if (current?.Parent == null) return;
+
+            var siblings = current.Parent.Children;
+            int index = siblings.IndexOf(current);
+            if (index > 0)
+            {
+                var elder = siblings[index - 1];
+                siblings[index - 1] = current;
+                siblings[index] = elder;
+
+                // Y좌표 교환
+                double tempY = current.Position.Y;
+                current.Position = new Point(current.Position.X, elder.Position.Y);
+                elder.Position = new Point(elder.Position.X, tempY);
+
+                UpdateNodeControlPosition(current);
+                UpdateNodeControlPosition(elder);
+
+                SelectionService.Select(current);
+            }
+        }
+
+        private void MoveNodeDown()
+        {
+            var current = SelectionService.SelectedNode;
+            if (current?.Parent == null) return;
+
+            var siblings = current.Parent.Children;
+            int index = siblings.IndexOf(current);
+            if (index >= 0 && index < siblings.Count - 1)
+            {
+                var younger = siblings[index + 1];
+                siblings[index + 1] = current;
+                siblings[index] = younger;
+
+                // Y좌표 교환
+                double tempY = current.Position.Y;
+                current.Position = new Point(current.Position.X, younger.Position.Y);
+                younger.Position = new Point(younger.Position.X, tempY);
+
+                UpdateNodeControlPosition(current);
+                UpdateNodeControlPosition(younger);
+
+                SelectionService.Select(current);
+            }
+        }
+
+        private void MoveNodeLeft()
+        {
+            var current = SelectionService.SelectedNode;
+            if (current == null || current.Parent == null) return;
+
+            if (!current.IsLeftSide)
+            {
+                var parent = current.Parent;
+                var grandParent = parent.Parent;
+
+                if (grandParent != null)
+                {
+                    var parentSiblings = grandParent.Children;
+                    int parentIndex = parentSiblings.IndexOf(parent);
+
+                    if (parentIndex >= 0)
+                    {
+                        // 기존 부모에서 current 제거
+                        parent.Children.Remove(current);
+
+                        // 부모 다음에 current 삽입
+                        int insertIndex = parentIndex + 1;
+                        if (insertIndex > parentSiblings.Count)
+                            insertIndex = parentSiblings.Count; // 혹시 모를 오버플로 방지
+
+                        grandParent.Children.Insert(insertIndex, current);
+                        current.Parent = grandParent;
+
+                        // 기존 Branch 제거, 새로운 Branch 등록
+                        _branchManager.RemoveBranch(parent, current);
+                        _branchManager.RegisterBranch(grandParent, current);
+
+                        // 위치 갱신
+                        double newX = parent.Position.X + 250; // 부모보다 오른쪽
+                        double newY = parent.Position.Y + 100; // 약간 아래
+                        current.Position = new Point(newX, newY);
+                        UpdateNodeControlPosition(current);
+                    }
+                }
+            }
+            else
+            {
+                // 왼쪽 그룹 로직은 기존과 동일
+                var siblings = current.Parent.Children;
+                int index = siblings.IndexOf(current);
+                if (index > 0)
+                {
+                    var elder = siblings[index - 1];
+                    siblings.RemoveAt(index);
+                    elder.Children.Add(current);
+                    current.Parent = elder;
+
+                    _branchManager.RemoveBranch(current.Parent, current);
+                    _branchManager.RegisterBranch(elder, current);
+
+                    current.Position = new Point(elder.Position.X - 150, elder.Position.Y + 100);
+                    UpdateNodeControlPosition(current);
+                }
+            }
+        }
+
+
+
+
+        private void MoveNodeRight()
+        {
+            var current = SelectionService.SelectedNode;
+            if (current == null || current.Parent == null) return;
+
+            if (current.IsLeftSide)
+            {
+                // 왼쪽 그룹 노드
+                var parent = current.Parent;
+                var grandParent = parent.Parent;
+
+                if (grandParent != null)
+                {
+                    var parentSiblings = grandParent.Children;
+                    int parentIndex = parentSiblings.IndexOf(parent);
+
+                    if (parentIndex >= 0)
+                    {
+                        // 기존 부모에서 current 제거
+                        parent.Children.Remove(current);
+
+                        // 부모 다음에 current 삽입
+                        int insertIndex = parentIndex + 1;
+                        if (insertIndex > parentSiblings.Count)
+                            insertIndex = parentSiblings.Count;
+
+                        grandParent.Children.Insert(insertIndex, current);
+                        current.Parent = grandParent;
+
+                        // 가지 재설정
+                        _branchManager.RemoveBranch(parent, current);
+                        _branchManager.RegisterBranch(grandParent, current);
+
+                        // 위치 조정
+                        double newX = parent.Position.X + 250; // 부모보다 오른쪽
+                        double newY = parent.Position.Y + 100;
+                        current.Position = new Point(newX, newY);
+                        UpdateNodeControlPosition(current);
+                    }
+                }
+            }
+            else
+            {
+                // 오른쪽 그룹 노드
+                var siblings = current.Parent.Children;
+                int index = siblings.IndexOf(current);
+                if (index > 0)
+                {
+                    var elder = siblings[index - 1];
+                    var oldParent = current.Parent; // 이동 전 부모를 저장
+
+                    siblings.RemoveAt(index);
+                    elder.Children.Add(current);
+                    current.Parent = elder;
+
+                    _branchManager.RemoveBranch(oldParent, current); // 이동 전 부모와의 Branch를 삭제
+                    _branchManager.RegisterBranch(elder, current);   // 이동 후 새 부모와 Branch를 등록
+
+                    current.Position = new Point(elder.Position.X + 150, elder.Position.Y + 100);
+                    UpdateNodeControlPosition(current);
+                }
+            }
+        }
+
 
     }
 

@@ -25,7 +25,7 @@ namespace MindMap.Views
             _clickPosition = e.GetPosition(this);
             this.CaptureMouse();
 
-            // 노드 선택
+            // 추가: 노드 선택
             if (this.DataContext is Models.MindMapNode node)
             {
                 SelectionService.Select(node);
