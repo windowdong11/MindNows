@@ -8,6 +8,10 @@
         <KeyBinding Key="Tab" Command="{Binding AddChildCommand}" />
         <KeyBinding Key="Enter" Command="{Binding AddSiblingCommand}" />
         <KeyBinding Key="Back" Command="{Binding DeleteNodeCommand}" />
+        <KeyBinding Key="Left" Command="{Binding MoveSelectionLeftCommand}" />
+        <KeyBinding Key="Right" Command="{Binding MoveSelectionRightCommand}" />
+        <KeyBinding Key="Up" Command="{Binding MoveSelectionUpCommand}" />
+        <KeyBinding Key="Down" Command="{Binding MoveSelectionDownCommand}" />
     </Window.InputBindings>
     <Canvas x:Name="MindMapCanvas" Background="#455A65">
         <!-- Branches 먼저 -->
