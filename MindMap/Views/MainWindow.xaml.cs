@@ -1,9 +1,8 @@
-﻿// MainWindow.xaml.cs (정리된 버전)
+﻿// Views/MainWindow.xaml.cs
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -223,7 +222,6 @@ namespace MindMap
                 DrawBoundingBox(child);
         }
 
-        // 이하: MoveSelection / MoveNode / LayoutTree / ComputeBoundingArea 등은 구조 동일 → 필요 시 별도 정리 가능
         public void LayoutTree(MindMapNode root)
         {
             var rootY = root.Position.Y;
@@ -263,15 +261,7 @@ namespace MindMap
                 childTop += curChildBoundingAreaHeight;
             }
         }
-        /*
-        1. 모든 트리의 바운딩 박스를 구함
-        2. 바운딩 박스를 바탕으로 자식의 총 높이를 구함 (아래 규칙을 따름)
-        - 1번째 요소 : (바운딩 박스 + 자신 높이) / 2
-        - 2~n-1번째 요소 : 바운딩 박스
-        - n번째 요소 : (바운딩 박스 + 자신 높이) / 2
-        3. 부모의 Y좌표 - 총 높이 / 2 부터 자식을 배치
-        4. 다음 자식의 Y좌표는 현재 자식의 Y좌표 + 현재 자식의 바운딩 박스 높이 / 2 + 다음 자식의 바운딩 박스 높이 / 2
-        */
+
         internal BoundingArea ComputeBoundingArea(MindMapNode root)
         {
             // 자식 노드의 총 높이 계산
@@ -279,7 +269,6 @@ namespace MindMap
             double maxChildWidth = 0;
             for (int i = 0; i < root.Children.Count; i++)
             {
-                //var box = _boundingBoxs[root.Children[i].Id];
                 var childBoundingArea = ComputeBoundingArea(root.Children[i]);
                 maxChildWidth = Math.Max(maxChildWidth, childBoundingArea.Width);
                 totalHeight += childBoundingArea.Height;

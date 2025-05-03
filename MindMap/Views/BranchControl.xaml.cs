@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿//Views/BranchControl.xaml.cs
+using System.Windows;
 using System.Windows.Controls;
 
 namespace MindMap.Views

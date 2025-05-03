@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Models/MindMapArrow.cs
+using System;
 
 namespace MindMap.Models
 {

@@ -1,4 +1,5 @@
 ﻿using MindMap.Models;
+// Services/BranchManager.cs
 using MindMap.Views;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿// Models/MindMapDocument.cs
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace MindMap.Models

@@ -1,4 +1,5 @@
-﻿using MindMap.Services;
+﻿// Views/NodeControl.xaml.cs
+using MindMap.Services;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -48,8 +49,6 @@ namespace MindMap.Views
                 {
                     node.Position = new Point(newX, newY);
                 }
-
-                // TODO: 가지 업데이트 호출 필요
             }
         }
 

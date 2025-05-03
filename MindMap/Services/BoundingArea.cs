@@ -1,4 +1,5 @@
-﻿namespace MindMap.Services
+﻿// Services/BoundingArea.cs
+namespace MindMap.Services
 {
     internal class BoundingArea
     {
