@@ -60,6 +60,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Converters\SelectionToBorderThicknessConvertor.cs" />
     <Compile Include="Converters\SelectionToBorderBrushConverter.cs" />
     <Compile Include="Models\MindMapArrow.cs" />
@@ -68,7 +69,12 @@
     <Compile Include="Services\BoundingArea.cs" />
     <Compile Include="Services\BoundingBox.cs" />
     <Compile Include="Services\BranchManager.cs" />
+    <Compile Include="Services\IMindMapLayoutEngine.cs" />
     <Compile Include="Services\SelectionService.cs" />
+    <Compile Include="Services\TopDownTreeLayoutEngine.cs" />
+    <Compile Include="ViewModels\MindMapArrowViewModel.cs" />
+    <Compile Include="ViewModels\MindMapNodeViewModel.cs" />
+    <Compile Include="ViewModels\MindMapViewModel.cs" />
     <Compile Include="Views\BranchControl.xaml.cs">
       <DependentUpon>BranchControl.xaml</DependentUpon>
     </Compile>

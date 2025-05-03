@@ -9,12 +9,10 @@
         BorderBrush="{Binding IsSelected, Converter={StaticResource SelectionToBorderBrushConverter}}"
         BorderThickness="{Binding IsSelected, Converter={StaticResource SelectionToBorderThicknessConverter}}">
         <StackPanel>
-            <Image Source="{Binding ImagePath}" 
-                   MaxWidth="200" MaxHeight="200"
-                   Stretch="Uniform"/>
+            <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"/>
             <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                     BorderThickness="0" Background="Transparent" FontSize="14"
-                     MinWidth="100" MinHeight="30"/>
+                 BorderThickness="0" Background="Transparent" FontSize="14"
+                 MinWidth="100" MinHeight="30"/>
         </StackPanel>
     </Border>
 </UserControl>

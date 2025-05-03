@@ -10,12 +10,8 @@ namespace MindMap.Models
         = new ObservableCollection<MindMapNode>();
 
         /* 노드 동적 추가 예시 */
-        internal MindMapNode AddNode(string text)
+        internal MindMapNode AddNode(MindMapNode newNode)
         {
-            var newNode = new MindMapNode
-            {
-                Text = text,
-            };
             Nodes.Add(newNode);
             return newNode;
         }
@@ -25,10 +21,7 @@ namespace MindMap.Models
         public MindMapDocument(MindMapNode root)
         {
             RootNode = root;
-            Nodes.Add(new MindMapNode
-            {
-                Text = root.Text,
-            });
+            Nodes.Add(root);
         }
     }
 }
