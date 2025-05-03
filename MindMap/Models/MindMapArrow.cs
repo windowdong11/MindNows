@@ -1,5 +1,4 @@
-﻿using MindMap.Models;
-using System;
+﻿using System;
 
 namespace MindMap.Models
 {
