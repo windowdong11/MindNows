@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 
@@ -94,6 +95,10 @@ namespace MindMap.ViewModels
             MoveSelectionRightCommand = new RelayCommand(_ => MoveSelectionRight(), _ => SelectedNode != null);
             MoveSelectionUpCommand = new RelayCommand(_ => MoveSelectionUp(), _ => SelectedNode != null);
             MoveSelectionDownCommand = new RelayCommand(_ => MoveSelectionDown(), _ => SelectedNode != null);
+            MoveNodeUpCommand = new RelayCommand(_ => MoveNodeUp(), _ => CanMoveNodeUp());
+            MoveNodeDownCommand = new RelayCommand(_ => MoveNodeDown(), _ => CanMoveNodeDown());
+            MoveNodeLeftCommand = new RelayCommand(_ => MoveNodeLeft(), _ => CanMoveNodeLeft());
+            MoveNodeRightCommand = new RelayCommand(_ => MoveNodeRight(), _ => CanMoveNodeRight());
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -102,13 +107,24 @@ namespace MindMap.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
+        /* ---------- 노드 추가/삭제 ---------- */
         public ICommand AddChildCommand { get; }
         public ICommand AddSiblingCommand { get; }
         public ICommand DeleteNodeCommand { get; }
+
+        /* ---------- 노드 선택 ---------- */
         public ICommand MoveSelectionLeftCommand { get; }
         public ICommand MoveSelectionRightCommand { get; }
         public ICommand MoveSelectionUpCommand { get; }
         public ICommand MoveSelectionDownCommand { get; }
+
+        /* ---------- 노드 이동 ---------- */
+        public ICommand MoveNodeUpCommand { get; }
+
+        public ICommand MoveNodeDownCommand { get; }
+        public ICommand MoveNodeLeftCommand { get; }
+        public ICommand MoveNodeRightCommand { get; }
+
 
         private void AddChild()
         {
@@ -346,6 +362,138 @@ namespace MindMap.ViewModels
             }
 
             //RequestLayout();
+        }
+
+        // ---------- 노드 이동 ----------
+        private bool CanMoveNodeUp()
+        {
+            var node = SelectedNode;
+            if (node?.Parent == null) return false;
+
+            var siblings = node.Parent.Children;
+            int index = siblings.IndexOf(node);
+            return index > 0;
+        }
+        private void MoveNodeUp()
+        {
+            var node = SelectedNode;
+            if (node?.Parent == null) return;
+
+            var siblings = node.Parent.Children;
+            int index = siblings.IndexOf(node);
+            if (index > 0)
+            {
+                // 순서 교환
+                var elder = siblings[index - 1];
+                siblings[index - 1] = node;
+                siblings[index] = elder;
+
+                // 위치 교환
+                double tempY = node.Position.Y;
+                node.Position = new Point(node.Position.X, elder.Position.Y);
+                elder.Position = new Point(elder.Position.X, tempY);
+
+                RequestLayout();
+            }
+        }
+        private bool CanMoveNodeDown()
+        {
+            var node = SelectedNode;
+            if (node?.Parent == null) return false;
+
+            var siblings = node.Parent.Children;
+            int index = siblings.IndexOf(node);
+            return index >= 0 && index < siblings.Count - 1;
+        }
+
+        private void MoveNodeDown()
+        {
+            var node = SelectedNode;
+            if (node?.Parent == null) return;
+
+            var siblings = node.Parent.Children;
+            int index = siblings.IndexOf(node);
+            if (index >= 0 && index < siblings.Count - 1)
+            {
+                var younger = siblings[index + 1];
+                siblings[index + 1] = node;
+                siblings[index] = younger;
+
+                // 위치 교환
+                double tempY = node.Position.Y;
+                node.Position = new Point(node.Position.X, younger.Position.Y);
+                younger.Position = new Point(younger.Position.X, tempY);
+
+                //RequestLayout();
+            }
+        }
+
+        private bool CanMoveNodeLeft()
+        {
+            var node = SelectedNode;
+            return node?.Parent?.Parent != null;
+        }
+
+
+        private void MoveNodeLeft()
+        {
+            var node = SelectedNode;
+            if (node == null || node.Parent == null) return;
+
+            var parent = node.Parent;
+            var grandParent = parent.Parent;
+            if (grandParent == null) return;
+
+            // 1. 부모에서 자신 제거
+            parent.Children.Remove(node);
+
+            // 2. 부모의 형제 목록에서 자신의 새 위치 계산
+            var siblings = grandParent.Children;
+            int parentIndex = siblings.IndexOf(parent);
+
+            // 3. 부모 바로 뒤에 삽입 (동생으로)
+            int insertIndex = parentIndex + 1;
+            if (insertIndex > siblings.Count)
+                insertIndex = siblings.Count;
+
+            siblings.Insert(insertIndex, node);
+            node.Parent = grandParent;
+
+            RequestLayout();
+        }
+
+        private bool CanMoveNodeRight()
+        {
+            var node = SelectedNode;
+            if (node?.Parent == null) return false;
+
+            var siblings = node.Parent.Children;
+            int index = siblings.IndexOf(node);
+            return index > 0; // 앞에 형제가 있어야 함
+        }
+
+        private void MoveNodeRight()
+        {
+            var node = SelectedNode;
+            if (node?.Parent == null) return;
+
+            var oldParent = node.Parent;
+            var siblings = oldParent.Children;
+            int index = siblings.IndexOf(node);
+            if (index <= 0) return;
+
+            var elder = siblings[index - 1]; // 바로 앞의 형
+            oldParent.Children.Remove(node);
+
+            elder.Children.Add(node);
+            node.Parent = elder;
+
+            // 위치 조정: 형보다 오른쪽/아래
+            double newX = elder.Position.X + 150;
+            double newY = elder.Position.Y + 100;
+            node.Position = new Point(newX, newY);
+
+            RequestLayout();
         }
     }
 }

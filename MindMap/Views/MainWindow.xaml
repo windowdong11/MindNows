@@ -12,6 +12,10 @@
         <KeyBinding Key="Right" Command="{Binding MoveSelectionRightCommand}" />
         <KeyBinding Key="Up" Command="{Binding MoveSelectionUpCommand}" />
         <KeyBinding Key="Down" Command="{Binding MoveSelectionDownCommand}" />
+        <KeyBinding Key="Up" Modifiers="Control" Command="{Binding MoveNodeUpCommand}" />
+        <KeyBinding Key="Down" Modifiers="Control" Command="{Binding MoveNodeDownCommand}" />
+        <KeyBinding Key="Left" Modifiers="Control" Command="{Binding MoveNodeLeftCommand}" />
+        <KeyBinding Key="Right" Modifiers="Control" Command="{Binding MoveNodeRightCommand}" />
     </Window.InputBindings>
     <Canvas x:Name="MindMapCanvas" Background="#455A65">
         <!-- Branches 먼저 -->
