@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace MindMap.Services
 {
-    internal interface IMindMapLayoutEngine
+    internal interface ILayoutService
     {
-        void ComputeLayout(MindMapViewModel viewModel);
+        void RecalculateLayout(MindMapNodeViewModel root);
     }
 }

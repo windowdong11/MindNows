@@ -70,12 +70,11 @@
     <Compile Include="Models\MindMapArrow.cs" />
     <Compile Include="Models\MindMapDocument.cs" />
     <Compile Include="Models\MindMapNode.cs" />
-    <Compile Include="Services\BoundingArea.cs" />
     <Compile Include="Services\BoundingBox.cs" />
     <Compile Include="Services\BranchManager.cs" />
-    <Compile Include="Services\IMindMapLayoutEngine.cs" />
+    <Compile Include="Services\ILayoutService.cs" />
+    <Compile Include="Services\LayoutService.cs" />
     <Compile Include="Services\SelectionService.cs" />
-    <Compile Include="Services\TopDownTreeLayoutEngine.cs" />
     <Compile Include="ViewModels\MindMapArrowViewModel.cs" />
     <Compile Include="ViewModels\MindMapNodeViewModel.cs" />
     <Compile Include="ViewModels\MindMapViewModel.cs" />

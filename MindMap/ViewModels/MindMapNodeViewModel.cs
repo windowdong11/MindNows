@@ -1,6 +1,7 @@
 ﻿using MindMap.Behavior;
 using MindMap.Common;
 using MindMap.Models;
+using MindMap.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,6 +18,50 @@ namespace MindMap.ViewModels
     internal class MindMapNodeViewModel : INotifyPropertyChanged, IPosition
     {
         public MindMapNode Model { get; }
+
+        public double Width
+        {
+            get => Model.Size.Width;
+            set
+            {
+                if (Model.Size.Width != value)
+                {
+                    Model.Size = new Size(value, Model.Size.Height);
+                    OnPropertyChanged();
+                    RootViewModel.RequestLayout();
+                }
+            }
+        }
+
+        public double Height
+        {
+            get => Model.Size.Height;
+            set
+            {
+                if (Model.Size.Height != value)
+                {
+                    Model.Size = new Size(Model.Size.Width, value);
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public BoundingArea _boundingArea;
+
+        public BoundingArea BoundingArea
+        {
+            get => _boundingArea;
+            set
+            {
+                if (_boundingArea != value)
+                {
+                    _boundingArea = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+
 
         private bool _isFocused;
         public bool IsFocused

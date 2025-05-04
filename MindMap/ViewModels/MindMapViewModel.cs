@@ -1,5 +1,6 @@
 ﻿using MindMap.Common;
 using MindMap.Models;
+using MindMap.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -32,10 +33,13 @@ namespace MindMap.ViewModels
     internal class MindMapViewModel : INotifyPropertyChanged
     {
         public event Action? LayoutRequested;
+        private readonly ILayoutService _layoutService;
 
         public void RequestLayout()
         {
-            LayoutRequested?.Invoke(); // 내부에서만 호출하므로 안전
+            if (RootNode != null)
+                _layoutService.RecalculateLayout(RootNode);
+            //LayoutRequested()?.Invoke(); // 내부에서만 호출하므로 안전
         }
         public ObservableCollection<MindMapNodeViewModel> Nodes { get; } = new();
         public MindMapNodeViewModel RootNode;
@@ -72,8 +76,9 @@ namespace MindMap.ViewModels
         }
 
 
-        public MindMapViewModel(MindMapDocument document)
+        public MindMapViewModel(MindMapDocument document, ILayoutService layoutService)
         {
+            _layoutService = layoutService;
             var nodeMap = new Dictionary<Guid, MindMapNodeViewModel>();
 
             foreach (var model in document.Nodes)
@@ -201,7 +206,7 @@ namespace MindMap.ViewModels
             Nodes.Add(childVM);
             RegisterArrow(SelectedNode, childVM);
             SelectedNode = childVM;
-            LayoutRequested?.Invoke();
+            RequestLayout();
         }
 
         private void AddSibling()
@@ -225,7 +230,7 @@ namespace MindMap.ViewModels
             RegisterArrow(parent, childVM);
             SelectedNode = childVM;
 
-            LayoutRequested?.Invoke();
+            RequestLayout();
         }
 
         private void DeleteNode()
@@ -246,7 +251,7 @@ namespace MindMap.ViewModels
             parent.Model.Children.Remove(SelectedNode.Model);
             DeleteRecursive(SelectedNode);
             SelectedNode = parent;
-            LayoutRequested?.Invoke();
+            RequestLayout();
         }
 
         private MindMapNodeViewModel? FindOverlappingLeft(MindMapNodeViewModel current)

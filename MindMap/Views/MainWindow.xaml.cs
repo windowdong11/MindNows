@@ -19,7 +19,9 @@ namespace MindMap
     public partial class MainWindow : Window
     {
         private MindMapViewModel _viewModel;
-        private readonly IMindMapLayoutEngine _layoutEngine = new TopDownTreeLayoutEngine();
+        //private readonly IMindMapLayoutEngine _layoutEngine = new TopDownTreeLayoutEngine();
+        private readonly ILayoutService _layoutEngine = new LayoutService();
+        private readonly MindMapDocument document;
 
         public MainWindow()
         {
@@ -31,11 +33,8 @@ namespace MindMap
                 Position = new Point(300, 200)
             };
 
-            var document = new MindMapDocument(root);
-            //var child = new MindMapNode { Text = "Child", Position = new Point(500, 150) };
-            //child.Parent = root;
-            //document.AddNode(child);
-            _viewModel = new MindMapViewModel(document);
+            document = new MindMapDocument(root);
+            _viewModel = new MindMapViewModel(document, _layoutEngine);
 
             this.DataContext = _viewModel;
             Loaded += (_, _) =>
@@ -63,7 +62,7 @@ namespace MindMap
 
         void RefreshLayout()
         {
-            _layoutEngine.ComputeLayout(_viewModel);
+            _layoutEngine.RecalculateLayout(_viewModel.RootNode);
         }
     }
 }
