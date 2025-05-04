@@ -15,14 +15,23 @@
         BorderBrush="{Binding IsSelected, Converter={StaticResource SelectionToBorderBrushConverter}}"
         BorderThickness="{Binding IsSelected, Converter={StaticResource SelectionToBorderThicknessConverter}}">
         <StackPanel>
-            <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"/>
+            <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"
+                   Margin="0,0,0,4"/>
+            <Button Content="이미지 선택"
+                Command="{Binding SelectImageCommand}"
+                FontSize="12" Padding="4" HorizontalAlignment="Left"
+                IsTabStop="False"
+                Focusable="False"
+                Margin="0,0,0,4"/>
+
             <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      BorderThickness="0" Background="Transparent" FontSize="14"
                      AcceptsReturn="True" TextWrapping="Wrap"
                      MinWidth="100" MinHeight="30">
                 <i:Interaction.Behaviors>
                     <behavior:FocusBehavior IsFocused="{Binding IsFocused}" />
-                    <behavior:EscKeyToCommandBehavior Command="{Binding DataContext.ExitEditModeCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    <behavior:EscKeyToCommandBehavior
+                        Command="{Binding DataContext.ExitEditModeCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                     <!--<behavior:TextAutoWidthBehavior Vm="{Binding}"/>-->
                 </i:Interaction.Behaviors>
             </TextBox>

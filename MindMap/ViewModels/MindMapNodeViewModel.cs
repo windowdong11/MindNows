@@ -19,6 +19,21 @@ namespace MindMap.ViewModels
     {
         public MindMapNode Model { get; }
 
+        public ICommand SelectImageCommand { get; }
+
+        private void SelectImage()
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Image files (*.png;*.jpg;*.jpeg;*.gif)|*.png;*.jpg;*.jpeg;*.gif|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                ImagePath = dialog.FileName;
+            }
+        }
+
         public double Width
         {
             get => Model.Size.Width;
@@ -205,6 +220,7 @@ namespace MindMap.ViewModels
             RootViewModel = root;
 
             SelectCommand = new RelayCommand(_ => RootViewModel.SelectedNode = this);
+            SelectImageCommand = new RelayCommand(_ => SelectImage());
         }
     }
 }
