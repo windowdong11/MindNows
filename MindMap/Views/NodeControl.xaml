@@ -15,14 +15,35 @@
         BorderBrush="{Binding IsSelected, Converter={StaticResource SelectionToBorderBrushConverter}}"
         BorderThickness="{Binding IsSelected, Converter={StaticResource SelectionToBorderThicknessConverter}}">
         <StackPanel>
-            <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"
-                   Margin="0,0,0,4"/>
-            <Button Content="이미지 선택"
+            <Border BorderThickness="3"
+            CornerRadius="4"
+            Margin="0,0,0,4">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsImageSelected}" Value="True">
+                                <Setter Property="BorderBrush" Value="#3A8DFF"/>
+                                <!-- 원하는 색상 -->
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"
+                       Margin="0,0,0,4">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseLeftButtonDown">
+                            <i:InvokeCommandAction Command="{Binding ToggleSelectImageAreaCommand}" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </Image>
+            </Border>
+            <!--<Button Content="이미지 선택"
                 Command="{Binding SelectImageCommand}"
                 FontSize="12" Padding="4" HorizontalAlignment="Left"
                 IsTabStop="False"
                 Focusable="False"
-                Margin="0,0,0,4"/>
+                Margin="0,0,0,4"/>-->
 
             <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      BorderThickness="0" Background="Transparent" FontSize="14"

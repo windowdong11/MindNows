@@ -21,6 +21,13 @@
         <KeyBinding Key="Space" Command="{Binding EnterEditModeCommand}" />
         <KeyBinding Key="Escape" Command="{Binding ExitEditModeCommand}" />
     </Window.InputBindings>
+    <i:Interaction.Behaviors>
+        <behavior:KeyToCommandBehavior Key="Back"
+                                       Command="{Binding SelectedNode.RemoveImageCommand}" />
+        <behavior:KeyToCommandBehavior Key="V"
+                                    Modifiers="Control"
+                                    Command="{Binding SelectedNode.PasteImageCommand}" />
+    </i:Interaction.Behaviors>
     <Canvas x:Name="MindMapCanvas" Background="#455A65">
         <!-- 선 출력 -->
         <ItemsControl ItemsSource="{Binding Arrows}">

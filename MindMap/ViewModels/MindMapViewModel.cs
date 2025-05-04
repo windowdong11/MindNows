@@ -52,7 +52,11 @@ namespace MindMap.ViewModels
             {
                 if (_selectedNode != value)
                 {
-                    if (_selectedNode != null) _selectedNode.IsSelected = false;
+                    if (_selectedNode != null)
+                    {
+                        _selectedNode.IsSelected = false;
+                        _selectedNode.IsImageSelected = false;
+                    }
                     _selectedNode = value;
                     if (_selectedNode != null) _selectedNode.IsSelected = true;
                     OnPropertyChanged();

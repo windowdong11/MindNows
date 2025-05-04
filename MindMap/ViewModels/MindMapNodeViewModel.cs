@@ -87,6 +87,8 @@ namespace MindMap.ViewModels
                 if (_isFocused != value)
                 {
                     _isFocused = value;
+                    if (_isFocused == false && IsImageSelected == true)
+                        IsImageSelected = false;
                     OnPropertyChanged(nameof(IsFocused));
                 }
             }
@@ -190,6 +192,8 @@ namespace MindMap.ViewModels
                 if (Model.IsSelected != value)
                 {
                     Model.IsSelected = value;
+                    if (value == false && IsImageSelected)
+                        IsImageSelected = false;
                     OnPropertyChanged();
                 }
             }
@@ -202,6 +206,74 @@ namespace MindMap.ViewModels
         //{
         //    Model = model;
         //}
+
+        public ICommand ToggleSelectImageAreaCommand { get; }
+        public ICommand RemoveImageCommand { get; }
+        public ICommand PasteImageCommand { get; }
+
+
+        private bool _isImageSelected;
+        public bool IsImageSelected
+        {
+            get => _isImageSelected;
+            set
+            {
+                if (_isImageSelected != value)
+                {
+                    _isImageSelected = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private void PasteImageFromClipboard()
+        {
+            try
+            {
+                if (Clipboard.ContainsFileDropList())
+                {
+                    var files = Clipboard.GetFileDropList();
+                    var imageFile = files.Cast<string>().FirstOrDefault(f =>
+                        f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                        f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                        f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                        f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase));
+
+                    if (imageFile != null)
+                    {
+                        ImagePath = imageFile;
+                        IsImageSelected = true;
+                        return;
+                    }
+                }
+
+                if (Clipboard.ContainsImage())
+                {
+                    var image = Clipboard.GetImage();
+                    if (image != null)
+                    {
+                        // 파일 경로로 저장
+                        var tempPath = System.IO.Path.Combine(
+                            System.IO.Path.GetTempPath(),
+                            $"pasted_{Guid.NewGuid()}.png");
+
+                        using (var fileStream = new System.IO.FileStream(tempPath, System.IO.FileMode.Create))
+                        {
+                            var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
+                            encoder.Save(fileStream);
+                        }
+
+                        ImagePath = tempPath;
+                        IsImageSelected = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("붙여넣기 실패: " + ex.Message);
+            }
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -221,6 +293,19 @@ namespace MindMap.ViewModels
 
             SelectCommand = new RelayCommand(_ => RootViewModel.SelectedNode = this);
             SelectImageCommand = new RelayCommand(_ => SelectImage());
+            ToggleSelectImageAreaCommand = new RelayCommand(_ =>
+            {
+                IsImageSelected = !IsImageSelected;
+            });
+            RemoveImageCommand = new RelayCommand(_ =>
+            {
+                ImagePath = null;
+                IsImageSelected = false;
+                //if (IsImageSelected && !string.IsNullOrEmpty(ImagePath))
+                //{
+                //}
+            }, _ => IsImageSelected && !string.IsNullOrEmpty(ImagePath));
+            PasteImageCommand = new RelayCommand(_ => PasteImageFromClipboard());
         }
     }
 }
