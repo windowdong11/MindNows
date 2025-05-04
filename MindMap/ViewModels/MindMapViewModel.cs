@@ -58,6 +58,19 @@ namespace MindMap.ViewModels
 
         public ObservableCollection<MindMapArrowViewModel> Arrows { get; } = new();
 
+        public void RegisterArrow(MindMapNodeViewModel from, MindMapNodeViewModel to)
+        {
+            var arrow = new MindMapArrowViewModel(from, to);
+            Arrows.Add(arrow);
+        }
+
+        public void RemoveArrow(MindMapNodeViewModel from, MindMapNodeViewModel to)
+        {
+            var arrow = Arrows.FirstOrDefault(a => a.From == from && a.To == to);
+            if (arrow != null)
+                Arrows.Remove(arrow);
+        }
+
 
         public MindMapViewModel(MindMapDocument document)
         {
@@ -88,17 +101,19 @@ namespace MindMap.ViewModels
                 }
             }
 
-            AddChildCommand = new RelayCommand(_ => AddChild(), _ => SelectedNode != null);
-            AddSiblingCommand = new RelayCommand(_ => AddSibling(), _ => SelectedNode?.Parent != null);
-            DeleteNodeCommand = new RelayCommand(_ => DeleteNode(), _ => SelectedNode != null);
-            MoveSelectionLeftCommand = new RelayCommand(_ => MoveSelectionLeft(), _ => SelectedNode != null);
-            MoveSelectionRightCommand = new RelayCommand(_ => MoveSelectionRight(), _ => SelectedNode != null);
-            MoveSelectionUpCommand = new RelayCommand(_ => MoveSelectionUp(), _ => SelectedNode != null);
-            MoveSelectionDownCommand = new RelayCommand(_ => MoveSelectionDown(), _ => SelectedNode != null);
-            MoveNodeUpCommand = new RelayCommand(_ => MoveNodeUp(), _ => CanMoveNodeUp());
-            MoveNodeDownCommand = new RelayCommand(_ => MoveNodeDown(), _ => CanMoveNodeDown());
-            MoveNodeLeftCommand = new RelayCommand(_ => MoveNodeLeft(), _ => CanMoveNodeLeft());
-            MoveNodeRightCommand = new RelayCommand(_ => MoveNodeRight(), _ => CanMoveNodeRight());
+            AddChildCommand = new RelayCommand(_ => AddChild(), _ => !IsEditMode && SelectedNode != null);
+            AddSiblingCommand = new RelayCommand(_ => AddSibling(), _ => !IsEditMode && SelectedNode?.Parent != null);
+            DeleteNodeCommand = new RelayCommand(_ => DeleteNode(), _ => !IsEditMode && SelectedNode != null);
+            MoveSelectionLeftCommand = new RelayCommand(_ => MoveSelectionLeft(), _ => !IsEditMode);
+            MoveSelectionRightCommand = new RelayCommand(_ => MoveSelectionRight(), _ => !IsEditMode);
+            MoveSelectionUpCommand = new RelayCommand(_ => MoveSelectionUp(), _ => !IsEditMode);
+            MoveSelectionDownCommand = new RelayCommand(_ => MoveSelectionDown(), _ => !IsEditMode);
+            MoveNodeUpCommand = new RelayCommand(_ => MoveNodeUp(), _ => !IsEditMode && CanMoveNodeUp());
+            MoveNodeDownCommand = new RelayCommand(_ => MoveNodeDown(), _ => !IsEditMode && CanMoveNodeDown());
+            MoveNodeLeftCommand = new RelayCommand(_ => MoveNodeLeft(), _ => !IsEditMode && CanMoveNodeLeft());
+            MoveNodeRightCommand = new RelayCommand(_ => MoveNodeRight(), _ => !IsEditMode && CanMoveNodeRight());
+            EnterEditModeCommand = new RelayCommand(_ => EnterEditMode(), _ => !IsEditMode && SelectedNode != null);
+            ExitEditModeCommand = new RelayCommand(_ => ExitEditMode(), _ => IsEditMode);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -106,6 +121,44 @@ namespace MindMap.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+
+        public ICommand EnterEditModeCommand { get; }
+        public bool IsEditMode { get; set; }
+
+        //private bool _isFocused;
+        //public bool IsFocused
+        //{
+        //    get => _isFocused;
+        //    set
+        //    {
+        //        if (_isFocused != value)
+        //        {
+        //            _isFocused = value;
+        //            OnPropertyChanged(nameof(IsFocused));
+        //        }
+        //    }
+        //}
+
+        public ICommand ExitEditModeCommand { get; }
+        private void ExitEditMode()
+        {
+            IsEditMode = false;
+            if (SelectedNode != null)
+                SelectedNode.IsFocused = false; // 포커스 해제
+            //OnPropertyChanged(nameof(IsEditMode));
+        }
+
+        private void EnterEditMode()
+        {
+            if (SelectedNode != null)
+            {
+                SelectedNode.IsFocused = true;
+            }
+
+            IsEditMode = true;
+            //OnPropertyChanged(nameof(IsEditMode));
+        }
+
 
         /* ---------- 노드 추가/삭제 ---------- */
         public ICommand AddChildCommand { get; }
@@ -130,21 +183,20 @@ namespace MindMap.ViewModels
         {
             if (SelectedNode == null) return;
 
-            var model = new MindMapNode
+            var childModel = new MindMapNode
             {
                 Text = "New Child",
                 Parent = SelectedNode.Model
             };
-            SelectedNode.Model.Children.Add(model);
 
-            var vm = new MindMapNodeViewModel(model, this)
+            var childVM = new MindMapNodeViewModel(childModel, this)
             {
                 Parent = SelectedNode
             };
-            SelectedNode.Children.Add(vm);
-            Nodes.Add(vm);
-            Arrows.Add(new MindMapArrowViewModel(SelectedNode, vm));
-            SelectedNode = vm;
+            SelectedNode.Children.Add(childVM);
+            Nodes.Add(childVM);
+            RegisterArrow(SelectedNode, childVM);
+            SelectedNode = childVM;
             LayoutRequested?.Invoke();
         }
 
@@ -153,21 +205,21 @@ namespace MindMap.ViewModels
             if (SelectedNode?.Parent == null) return;
             var parent = SelectedNode.Parent;
 
-            var model = new MindMapNode
+            var childModel = new MindMapNode
             {
                 Text = "New Sibling",
                 Parent = parent.Model
             };
-            parent.Model.Children.Add(model);
+            parent.Model.Children.Add(childModel);
 
-            var vm = new MindMapNodeViewModel(model, this)
+            var childVM = new MindMapNodeViewModel(childModel, this)
             {
                 Parent = parent
             };
-            parent.Children.Add(vm);
-            Nodes.Add(vm);
-            Arrows.Add(new MindMapArrowViewModel(parent, vm));
-            SelectedNode = vm;
+            parent.Children.Add(childVM);
+            Nodes.Add(childVM);
+            RegisterArrow(parent, childVM);
+            SelectedNode = childVM;
 
             LayoutRequested?.Invoke();
         }
@@ -182,7 +234,7 @@ namespace MindMap.ViewModels
                     DeleteRecursive(child);
 
                 Nodes.Remove(vm);
-                Arrows.RemoveAll(a => a.From == vm || a.To == vm);
+                RemoveArrow(vm.Parent, vm);
             }
 
             var parent = SelectedNode.Parent;
@@ -206,7 +258,12 @@ namespace MindMap.ViewModels
         private void MoveSelectionLeft()
         {
             var current = SelectedNode;
-            if (current == null) return;
+            if (current == null)
+            {
+                // 선택된 노드가 없으면 RootNode를 선택
+                SelectedNode = RootNode;
+                return;
+            }
 
             if (current.Parent == null)
             {
@@ -233,6 +290,7 @@ namespace MindMap.ViewModels
                 }
                 else
                 {
+                    // 오른쪽 그룹인 경우, 부모 선택
                     SelectedNode = current.Parent;
                 }
             }
@@ -252,7 +310,12 @@ namespace MindMap.ViewModels
         private void MoveSelectionRight()
         {
             var current = SelectedNode;
-            if (current == null) return;
+            if (current == null)
+            {
+                // 선택된 노드가 없으면 RootNode를 선택
+                SelectedNode = RootNode;
+                return;
+            }
 
             if (current.Parent == null)
             {
@@ -279,6 +342,7 @@ namespace MindMap.ViewModels
                 }
                 else
                 {
+                    // 왼쪽 그룹인 경우, 부모 선택
                     SelectedNode = current.Parent;
                 }
             }
@@ -299,7 +363,12 @@ namespace MindMap.ViewModels
         private void MoveSelectionUp()
         {
             var current = SelectedNode;
-            if (current == null) return;
+            if (current == null)
+            {
+                // 선택된 노드가 없으면 RootNode를 선택
+                SelectedNode = RootNode;
+                return;
+            }
 
             if (current.Parent != null)
             {
@@ -337,7 +406,12 @@ namespace MindMap.ViewModels
         private void MoveSelectionDown()
         {
             var current = SelectedNode;
-            if (current == null) return;
+            if (current == null)
+            {
+                // 선택된 노드가 없으면 RootNode를 선택
+                SelectedNode = RootNode;
+                return;
+            }
 
             if (current.Parent != null)
             {
@@ -360,8 +434,6 @@ namespace MindMap.ViewModels
                     }
                 }
             }
-
-            //RequestLayout();
         }
 
         // ---------- 노드 이동 ----------
@@ -424,7 +496,7 @@ namespace MindMap.ViewModels
                 node.Position = new Point(node.Position.X, younger.Position.Y);
                 younger.Position = new Point(younger.Position.X, tempY);
 
-                //RequestLayout();
+                RequestLayout();
             }
         }
 
@@ -446,6 +518,7 @@ namespace MindMap.ViewModels
 
             // 1. 부모에서 자신 제거
             parent.Children.Remove(node);
+            RemoveArrow(parent, node);
 
             // 2. 부모의 형제 목록에서 자신의 새 위치 계산
             var siblings = grandParent.Children;
@@ -458,6 +531,7 @@ namespace MindMap.ViewModels
 
             siblings.Insert(insertIndex, node);
             node.Parent = grandParent;
+            RegisterArrow(grandParent, node);
 
             RequestLayout();
         }
@@ -484,9 +558,11 @@ namespace MindMap.ViewModels
 
             var elder = siblings[index - 1]; // 바로 앞의 형
             oldParent.Children.Remove(node);
+            RemoveArrow(oldParent, node);
 
             elder.Children.Add(node);
             node.Parent = elder;
+            RegisterArrow(elder, node);
 
             // 위치 조정: 형보다 오른쪽/아래
             double newX = elder.Position.X + 150;

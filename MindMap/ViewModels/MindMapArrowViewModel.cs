@@ -14,36 +14,30 @@ namespace MindMap.ViewModels
         public MindMapNodeViewModel From { get; }
         public MindMapNodeViewModel To { get; }
 
-        public Point StartPoint => new(
-            From.Position.X + From.Size.Width / 2,
-            From.Position.Y + From.Size.Height / 2);
-
-        public Point EndPoint => new(
-            To.Position.X + To.Size.Width / 2,
-            To.Position.Y + To.Size.Height / 2);
-
-        public bool IsBidirectional { get; set; }
+        public Point Start => From.Position;
+        public Point End => To.Position;
 
         public MindMapArrowViewModel(MindMapNodeViewModel from, MindMapNodeViewModel to)
         {
             From = from;
             To = to;
 
-            // From 또는 To 위치가 바뀌면 알림 발생
-            From.PropertyChanged += (_, e) =>
+            // 연결된 노드가 이동하면 Start, End 변경 알림
+            From.PropertyChanged += OnNodePropertyChanged;
+            To.PropertyChanged += OnNodePropertyChanged;
+        }
+
+        private void OnNodePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MindMapNodeViewModel.Position))
             {
-                if (e.PropertyName == nameof(From.Position) || e.PropertyName == nameof(From.Size))
-                    OnPropertyChanged(nameof(StartPoint));
-            };
-            To.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName == nameof(To.Position) || e.PropertyName == nameof(To.Size))
-                    OnPropertyChanged(nameof(EndPoint));
-            };
+                OnPropertyChanged(nameof(Start));
+                OnPropertyChanged(nameof(End));
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

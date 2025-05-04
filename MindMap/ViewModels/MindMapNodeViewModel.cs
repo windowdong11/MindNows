@@ -17,6 +17,19 @@ namespace MindMap.ViewModels
     {
         public MindMapNode Model { get; }
 
+        private bool _isFocused;
+        public bool IsFocused
+        {
+            get => _isFocused;
+            set
+            {
+                if (_isFocused != value)
+                {
+                    _isFocused = value;
+                    OnPropertyChanged(nameof(IsFocused));
+                }
+            }
+        }
         public Guid Id => Model.Id;
 
         public string Text

@@ -60,7 +60,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Behavior\EscKeyToCommandBehavior.cs" />
+    <Compile Include="Behavior\FocusBehavior.cs" />
     <Compile Include="Common\RelayCommand.cs" />
+    <Compile Include="Converters\InverseBoolConverter.cs" />
     <Compile Include="Converters\SelectionToBorderThicknessConvertor.cs" />
     <Compile Include="Converters\SelectionToBorderBrushConverter.cs" />
     <Compile Include="Models\MindMapArrow.cs" />

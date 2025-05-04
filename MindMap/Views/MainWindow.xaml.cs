@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,14 +32,33 @@ namespace MindMap
             };
 
             var document = new MindMapDocument(root);
-            var child = new MindMapNode { Text = "Child", Position = new Point(500, 150) };
-            child.Parent = root;
-            document.AddNode(child);
+            //var child = new MindMapNode { Text = "Child", Position = new Point(500, 150) };
+            //child.Parent = root;
+            //document.AddNode(child);
             _viewModel = new MindMapViewModel(document);
 
             this.DataContext = _viewModel;
+            Loaded += (_, _) =>
+            {
+                var focused = Keyboard.FocusedElement;
+                Debug.WriteLine($"초기 포커스: {focused}");
+            };
             _viewModel.LayoutRequested += RefreshLayout;
+            PreviewKeyDown += MainWindow_PreviewKeyDown;
             RefreshLayout();
+        }
+
+        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            var focused = Keyboard.FocusedElement;
+            string info = focused != null
+                ? $"{focused.GetType().Name} ({focused})"
+                : "null (포커스 없음)";
+            Console.WriteLine($"[{e.Key}] 키 입력 - 현재 포커스 대상: {info}");
+            var scope = FocusManager.GetFocusScope(GetWindow(this));
+            var focusedScope = FocusManager.GetFocusedElement(scope);
+            Console.WriteLine($"포커스 스코프: {scope}");
+            Console.WriteLine($"포커스된 스코프: {focusedScope}");
         }
 
         void RefreshLayout()

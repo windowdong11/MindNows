@@ -1,7 +1,13 @@
 ﻿<UserControl x:Class="MindMap.Views.NodeControl"
              xmlns:converter="clr-namespace:MindMap.Converters"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:behavior="clr-namespace:MindMap.Behavior"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewmodels="clr-namespace:MindMap.ViewModels">
+    <UserControl.Resources>
+        <converter:InverseBoolConverter x:Key="InverseBoolConverter" />
+    </UserControl.Resources>
     <Border x:Name="NodeBorder"
         CornerRadius="8"
         Background="White"
@@ -10,9 +16,14 @@
         BorderThickness="{Binding IsSelected, Converter={StaticResource SelectionToBorderThicknessConverter}}">
         <StackPanel>
             <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"/>
-            <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                 BorderThickness="0" Background="Transparent" FontSize="14"
-                 MinWidth="100" MinHeight="30"/>
+            <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     BorderThickness="0" Background="Transparent" FontSize="14"
+                     MinWidth="100" MinHeight="30">
+                <i:Interaction.Behaviors>
+                    <behavior:FocusBehavior IsFocused="{Binding IsFocused}" />
+                    <behavior:EscKeyToCommandBehavior Command="{Binding DataContext.ExitEditModeCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
         </StackPanel>
     </Border>
 </UserControl>
