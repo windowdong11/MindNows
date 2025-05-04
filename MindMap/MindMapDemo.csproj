@@ -60,6 +60,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Behavior\DragMoveBehavior.cs" />
     <Compile Include="Behavior\EscKeyToCommandBehavior.cs" />
     <Compile Include="Behavior\FocusBehavior.cs" />
     <Compile Include="Common\RelayCommand.cs" />

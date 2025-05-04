@@ -18,10 +18,12 @@
             <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"/>
             <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      BorderThickness="0" Background="Transparent" FontSize="14"
+                     AcceptsReturn="True" TextWrapping="Wrap"
                      MinWidth="100" MinHeight="30">
                 <i:Interaction.Behaviors>
                     <behavior:FocusBehavior IsFocused="{Binding IsFocused}" />
                     <behavior:EscKeyToCommandBehavior Command="{Binding DataContext.ExitEditModeCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    <!--<behavior:TextAutoWidthBehavior Vm="{Binding}"/>-->
                 </i:Interaction.Behaviors>
             </TextBox>
         </StackPanel>

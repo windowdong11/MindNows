@@ -1,4 +1,5 @@
-﻿using MindMap.Common;
+﻿using MindMap.Behavior;
+using MindMap.Common;
 using MindMap.Models;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ using System.Windows.Input;
 
 namespace MindMap.ViewModels
 {
-    internal class MindMapNodeViewModel : INotifyPropertyChanged
+    internal class MindMapNodeViewModel : INotifyPropertyChanged, IPosition
     {
         public MindMapNode Model { get; }
 
@@ -66,6 +67,29 @@ namespace MindMap.ViewModels
                 if (Model.Position != value)
                 {
                     Model.Position = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public double X
+        {
+            get => Position.X; set
+            {
+                if (Position.X != value)
+                {
+                    Position = new Point(value, Position.Y);
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public double Y
+        {
+            get => Position.Y;
+            set
+            {
+                if (Position.Y != value)
+                {
+                    Position = new Point(Position.X, value);
                     OnPropertyChanged();
                 }
             }

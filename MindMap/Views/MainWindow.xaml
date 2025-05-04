@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:MindMap.Views"
         xmlns:vm="clr-namespace:MindMap.ViewModels"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:behavior="clr-namespace:MindMap.Behavior"
         Title="Mind Map" Height="800" Width="1200">
     <Window.InputBindings>
         <KeyBinding Key="Tab" Command="{Binding AddChildCommand}" />
@@ -57,7 +59,12 @@
 
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="{x:Type vm:MindMapNodeViewModel}">
-                    <local:NodeControl/>
+                    <local:NodeControl>
+                        <i:Interaction.Behaviors>
+                            <behavior:DragMoveBehavior TargetPanel="{Binding ElementName=MindMapCanvas}"
+                                                       OnDragCompletedCommand="{Binding DataContext.RecalculateLayoutCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        </i:Interaction.Behaviors>
+                    </local:NodeControl>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

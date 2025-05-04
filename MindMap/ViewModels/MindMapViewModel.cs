@@ -114,6 +114,7 @@ namespace MindMap.ViewModels
             MoveNodeRightCommand = new RelayCommand(_ => MoveNodeRight(), _ => !IsEditMode && CanMoveNodeRight());
             EnterEditModeCommand = new RelayCommand(_ => EnterEditMode(), _ => !IsEditMode && SelectedNode != null);
             ExitEditModeCommand = new RelayCommand(_ => ExitEditMode(), _ => IsEditMode);
+            RecalculateLayoutCommand = new RelayCommand(_ => RequestLayout());
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -138,6 +139,9 @@ namespace MindMap.ViewModels
         //        }
         //    }
         //}
+
+        public ICommand RecalculateLayoutCommand { get; }
+
 
         public ICommand ExitEditModeCommand { get; }
         private void ExitEditMode()
