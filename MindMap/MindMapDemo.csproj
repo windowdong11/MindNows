@@ -61,10 +61,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Behavior\DragMoveBehavior.cs" />
+    <Compile Include="Behavior\DragThumbBehavior.cs" />
     <Compile Include="Behavior\EscKeyToCommandBehavior.cs" />
     <Compile Include="Behavior\FocusBehavior.cs" />
     <Compile Include="Behavior\KeyToCommandBehavior.cs" />
     <Compile Include="Common\RelayCommand.cs" />
+    <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\InverseBoolConverter.cs" />
     <Compile Include="Converters\SelectionToBorderThicknessConvertor.cs" />
     <Compile Include="Converters\SelectionToBorderBrushConverter.cs" />

@@ -6,17 +6,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewmodels="clr-namespace:MindMap.ViewModels">
     <UserControl.Resources>
+        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converter:InverseBoolConverter x:Key="InverseBoolConverter" />
     </UserControl.Resources>
     <Border x:Name="NodeBorder"
         CornerRadius="8"
         Background="White"
         Padding="8"
+            Width="{Binding Width}"
         BorderBrush="{Binding IsSelected, Converter={StaticResource SelectionToBorderBrushConverter}}"
         BorderThickness="{Binding IsSelected, Converter={StaticResource SelectionToBorderThicknessConverter}}">
         <StackPanel>
             <Border BorderThickness="3"
             CornerRadius="4"
+                    HorizontalAlignment="Center"
+                    Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToVisibilityConverter}}"
             Margin="0,0,0,4">
                 <Border.Style>
                     <Style TargetType="Border">
@@ -29,14 +33,45 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <Image Source="{Binding ImagePath}" MaxWidth="200" MaxHeight="200" Stretch="Uniform"
-                       Margin="0,0,0,4">
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="MouseLeftButtonDown">
-                            <i:InvokeCommandAction Command="{Binding ToggleSelectImageAreaCommand}" />
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
-                </Image>
+                <Grid>
+                    <Image Source="{Binding ImagePath}"
+                           Width="{Binding ImageWidth}"
+                           Stretch="Uniform"
+                           Margin="0,0,0,4">
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="MouseLeftButtonDown">
+                                <i:InvokeCommandAction Command="{Binding ToggleSelectImageAreaCommand}" />
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </Image>
+                    <!-- 왼쪽 핸들 -->
+                    <Thumb Width="8" Height="20"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"
+                       Cursor="SizeWE"
+                       Margin="-4,0,0,0"
+                       Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                           >
+                       <!--DragDelta="LeftImageThumb_DragDelta"-->
+                        <i:Interaction.Behaviors>
+                            <behavior:DragThumbBehavior Command="{Binding ResizeImageLeftCommand}" />
+                        </i:Interaction.Behaviors>
+                    </Thumb>
+
+                    <!-- 오른쪽 핸들 -->
+                    <Thumb Width="8" Height="20"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       Cursor="SizeWE"
+                       Margin="0,0,-4,0"
+                       Visibility="{Binding IsImageSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                           >
+                       <!--DragDelta="RightImageThumb_DragDelta"-->
+                        <i:Interaction.Behaviors>
+                            <behavior:DragThumbBehavior Command="{Binding ResizeImageRightCommand}" />
+                        </i:Interaction.Behaviors>
+                    </Thumb>
+                </Grid>
             </Border>
             <!--<Button Content="이미지 선택"
                 Command="{Binding SelectImageCommand}"
@@ -56,6 +91,17 @@
                     <!--<behavior:TextAutoWidthBehavior Vm="{Binding}"/>-->
                 </i:Interaction.Behaviors>
             </TextBox>
+            <Thumb Width="12" Height="12"
+               HorizontalAlignment="Right"
+               VerticalAlignment="Top"
+               Cursor="SizeWE"
+               Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+               Margin="2">
+               <!--DragDelta="NodeResizeThumb_DragDelta"-->
+                <i:Interaction.Behaviors>
+                    <behavior:DragThumbBehavior Command="{Binding ResizeNodeCommand}" />
+                </i:Interaction.Behaviors>
+            </Thumb>
         </StackPanel>
     </Border>
 </UserControl>

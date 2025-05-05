@@ -17,7 +17,55 @@ namespace MindMap.ViewModels
 {
     internal class MindMapNodeViewModel : INotifyPropertyChanged, IPosition
     {
+        static double defaultWidth = 60;
         public MindMapNode Model { get; }
+
+        public double ImagePadding => 20;
+
+        private double MinImageWidth => 10;
+        private double MinNodeWidth => 20;
+
+        public ICommand ResizeNodeCommand => new RelayCommand(param =>
+        {
+            if (param is Vector delta)
+            {
+                Width = Math.Max(MinNodeWidth, Width + delta.X);
+
+                // 이미지보다 작아지면 이미지 축소
+                if (ImageWidth + ImagePadding > Width)
+                {
+                    ImageWidth = Width - ImagePadding;
+                }
+            }
+        });
+
+
+        public ICommand ResizeImageRightCommand => new RelayCommand(param =>
+        {
+            if (param is Vector delta)
+            {
+                ImageWidth = Math.Max(MinImageWidth, ImageWidth + delta.X);
+                SyncNodeWidthWithImage();
+            }
+        });
+
+        public ICommand ResizeImageLeftCommand => new RelayCommand(param =>
+        {
+            if (param is Vector delta)
+            {
+                ImageWidth = Math.Max(MinImageWidth, ImageWidth - delta.X);
+                SyncNodeWidthWithImage();
+            }
+        });
+
+        private void SyncNodeWidthWithImage()
+        {
+            const double Padding = 20;
+            double requiredNodeWidth = ImageWidth + Padding;
+
+            if (requiredNodeWidth > Width)
+                Width = requiredNodeWidth;
+        }
 
         public ICommand SelectImageCommand { get; }
 
@@ -31,6 +79,21 @@ namespace MindMap.ViewModels
             if (dialog.ShowDialog() == true)
             {
                 ImagePath = dialog.FileName;
+            }
+        }
+
+        private double _imageWidth;
+        public double ImageWidth
+        {
+            get => _imageWidth;
+            set
+            {
+                if (_imageWidth != value)
+                {
+                    _imageWidth = value;
+                    OnPropertyChanged();
+                    //OnPropertyChanged(nameof(ImageHeight));
+                }
             }
         }
 
@@ -305,7 +368,7 @@ namespace MindMap.ViewModels
                 //{
                 //}
             }, _ => IsImageSelected && !string.IsNullOrEmpty(ImagePath));
-            PasteImageCommand = new RelayCommand(_ => PasteImageFromClipboard());
+            PasteImageCommand = new RelayCommand(_ => PasteImageFromClipboard(), _=> IsSelected);
         }
     }
 }

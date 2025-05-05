@@ -1,8 +1,11 @@
 ﻿// Views/NodeControl.xaml.cs
 using MindMap.Services;
 using MindMap.ViewModels;
+using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace MindMap.Views
@@ -54,6 +57,38 @@ namespace MindMap.Views
             {
                 if (vm.SelectCommand.CanExecute(null))
                     vm.SelectCommand.Execute(null);
+            }
+        }
+
+        private void NodeResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DataContext is MindMapNodeViewModel vm)
+            {
+                double newWidth = vm.Width + e.HorizontalChange;
+
+                const double MinWidth = 50;
+                const double MaxWidth = 600;
+                Debug.WriteLine($"Width: {newWidth}");
+
+                vm.Width = Math.Max(MinWidth, Math.Min(MaxWidth, newWidth));
+            }
+        }
+
+        private void LeftImageThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DataContext is MindMapNodeViewModel vm)
+            {
+                double newWidth = vm.ImageWidth - e.HorizontalChange;
+                vm.ImageWidth = Math.Max(20, newWidth);
+            }
+        }
+
+        private void RightImageThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DataContext is MindMapNodeViewModel vm)
+            {
+                double newWidth = vm.ImageWidth + e.HorizontalChange;
+                vm.ImageWidth = Math.Max(20, newWidth);
             }
         }
     }
