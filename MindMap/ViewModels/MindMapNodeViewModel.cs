@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace MindMap.ViewModels
 {
@@ -169,6 +170,7 @@ namespace MindMap.ViewModels
             }
         }
 
+        private bool HasImage = false;
         public string? ImagePath
         {
             get => Model.ImagePath;
@@ -176,7 +178,12 @@ namespace MindMap.ViewModels
             {
                 if (Model.ImagePath != value)
                 {
+                    HasImage = !string.IsNullOrEmpty(value);
                     Model.ImagePath = value;
+                    if (HasImage)
+                    {
+                        LoadImageMetadata(value); // 이미지 크기 불러오기
+                    }
                     OnPropertyChanged();
                 }
             }
@@ -333,6 +340,32 @@ namespace MindMap.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine("붙여넣기 실패: " + ex.Message);
+            }
+        }
+
+        private void LoadImageMetadata(string imagePath)
+        {
+            try
+            {
+                var bitmap = new BitmapImage(new Uri(imagePath, UriKind.Absolute));
+
+                // 강제로 초기화
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+
+                bitmap.Freeze(); // Freezable 객체로 메모리 안전하게
+
+                var width = bitmap.PixelWidth;
+                //var height = bitmap.PixelHeight;
+
+                //AspectRatio = (double)width / height;
+
+                ImageWidth = Math.Min(width, Width); // 최대 300까지 제한
+                                                     // ImageHeight는 ImageWidth와 AspectRatio 기반으로 자동 계산되게 해둔 상태라면 OK
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"이미지 로드 실패: {ex.Message}");
             }
         }
 

@@ -8,8 +8,8 @@ namespace MindMap.ViewModels
         public MindMapNodeViewModel From { get; }
         public MindMapNodeViewModel To { get; }
 
-        public Point Start => From.Position;
-        public Point End => To.Position;
+        public Point Start => new Point(From.Position.X + From.Width - 8, From.Position.Y + From.Height / 2.0);
+        public Point End => new Point(To.Position.X + 8, To.Position.Y + To.Height / 2.0);
 
         public MindMapArrowViewModel(MindMapNodeViewModel from, MindMapNodeViewModel to)
         {
