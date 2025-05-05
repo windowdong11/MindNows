@@ -3,8 +3,8 @@
 using MindMap.Views;
 using System;
 using System.Collections.Generic;
-using System.Windows.Controls;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MindMap.Services
 {

@@ -1,18 +1,11 @@
 ﻿// Views/MainWindow.xaml.cs
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Shapes;
 using MindMap.Models;
 using MindMap.Services;
 using MindMap.ViewModels;
-using MindMap.Views;
+using System;
+using System.Diagnostics;
+using System.Windows;
+using System.Windows.Input;
 
 namespace MindMap
 {

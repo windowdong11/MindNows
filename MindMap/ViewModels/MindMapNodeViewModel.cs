@@ -8,8 +8,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -368,7 +366,7 @@ namespace MindMap.ViewModels
                 //{
                 //}
             }, _ => IsImageSelected && !string.IsNullOrEmpty(ImagePath));
-            PasteImageCommand = new RelayCommand(_ => PasteImageFromClipboard(), _=> IsSelected);
+            PasteImageCommand = new RelayCommand(_ => PasteImageFromClipboard(), _ => IsSelected);
         }
     }
 }

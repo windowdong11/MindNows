@@ -1,11 +1,10 @@
-﻿using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows;
-using Microsoft.Xaml.Behaviors;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.ComponentModel;
+﻿using Microsoft.Xaml.Behaviors;
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace MindMap.Behavior
 {

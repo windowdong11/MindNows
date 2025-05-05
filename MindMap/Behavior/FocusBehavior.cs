@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xaml.Behaviors;
-using System.Windows.Controls;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MindMap.Behavior
 {
