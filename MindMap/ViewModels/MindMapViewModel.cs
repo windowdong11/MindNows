@@ -100,10 +100,10 @@ namespace MindMap.ViewModels
 
             foreach (var vm in Nodes)
             {
-                if (vm.Model.Parent != null && nodeMap.TryGetValue(vm.Model.Parent.Id, out var parentVm))
+                if (vm.Parent != null && nodeMap.TryGetValue(vm.Parent.Id, out var parentVm))
                 {
                     vm.Parent = parentVm;
-                    parentVm.Children.Add(vm);
+                    parentVm.AddChild(vm);
                     Arrows.Add(new MindMapArrowViewModel(parentVm, vm));
                 }
             }
@@ -194,17 +194,24 @@ namespace MindMap.ViewModels
         {
             if (SelectedNode == null) return;
 
+            bool isLeftSide = SelectedNode.IsLeftSide;
+            if (SelectedNode.Id == RootNode.Id)
+            {
+                isLeftSide = RootNode.LeftChildren.Count > 0;
+            }
+
             var childModel = new MindMapNode
             {
                 Text = "New Child",
-                Parent = SelectedNode.Model
+                Parent = SelectedNode.Model,
+                IsLeftSide = isLeftSide
             };
 
             var childVM = new MindMapNodeViewModel(childModel, this)
             {
                 Parent = SelectedNode
             };
-            SelectedNode.Children.Add(childVM);
+            SelectedNode.AddChild(childVM);
             Nodes.Add(childVM);
             RegisterArrow(SelectedNode, childVM);
             SelectedNode = childVM;
@@ -219,15 +226,16 @@ namespace MindMap.ViewModels
             var childModel = new MindMapNode
             {
                 Text = "New Sibling",
-                Parent = parent.Model
+                Parent = parent.Model,
+                IsLeftSide = SelectedNode.IsLeftSide
             };
-            parent.Model.Children.Add(childModel);
 
             var childVM = new MindMapNodeViewModel(childModel, this)
             {
-                Parent = parent
+                Parent = parent,
             };
-            parent.Children.Add(childVM);
+            var siblingsIdx = SelectedNode.Siblings.IndexOf(SelectedNode);
+            parent.AddChildAt(childVM, siblingsIdx + 1);
             Nodes.Add(childVM);
             RegisterArrow(parent, childVM);
             SelectedNode = childVM;
@@ -241,17 +249,18 @@ namespace MindMap.ViewModels
 
             void DeleteRecursive(MindMapNodeViewModel vm)
             {
-                foreach (var child in vm.Children.ToList())
+                foreach (var child in vm.LeftChildren)
+                    DeleteRecursive(child);
+                foreach (var child in vm.RightChildren)
                     DeleteRecursive(child);
 
                 Nodes.Remove(vm);
                 RemoveArrow(vm.Parent, vm);
             }
 
-            var parent = SelectedNode.Parent;
-            parent.Children.Remove(SelectedNode);
-            parent.Model.Children.Remove(SelectedNode.Model);
             DeleteRecursive(SelectedNode);
+            var parent = SelectedNode.Parent;
+            parent.RemoveChild(SelectedNode);
             SelectedNode = parent;
             RequestLayout();
         }
@@ -279,8 +288,8 @@ namespace MindMap.ViewModels
             if (current.Parent == null)
             {
                 // 루트 노드 → 왼쪽 자식 중 가장 위
-                var leftChildren = current.Children.Where(c => c.IsLeftSide).ToList();
-                var topMost = leftChildren.OrderBy(c => c.Position.Y).FirstOrDefault();
+                var leftChildren = current.LeftChildren;
+                var topMost = leftChildren.FirstOrDefault();
                 if (topMost != null)
                     SelectedNode = topMost;
             }
@@ -288,9 +297,9 @@ namespace MindMap.ViewModels
             {
                 if (current.IsLeftSide)
                 {
-                    if (current.Children.Count > 0)
+                    if (current.LeftChildren.Count > 0)
                     {
-                        SelectedNode = current.Children[0];
+                        SelectedNode = current.LeftChildren[0];
                     }
                     else
                     {
@@ -331,7 +340,7 @@ namespace MindMap.ViewModels
             if (current.Parent == null)
             {
                 // 루트 → 오른쪽 자식 중 가장 위
-                var rightChildren = current.Children.Where(c => !c.IsLeftSide).ToList();
+                var rightChildren = current.RightChildren;
                 var topMost = rightChildren.OrderBy(c => c.Position.Y).FirstOrDefault();
                 if (topMost != null)
                     SelectedNode = topMost;
@@ -340,9 +349,9 @@ namespace MindMap.ViewModels
             {
                 if (!current.IsLeftSide)
                 {
-                    if (current.Children.Count > 0)
+                    if (current.LeftChildren.Count > 0)
                     {
-                        SelectedNode = current.Children[0];
+                        SelectedNode = current.LeftChildren[0];
                     }
                     else
                     {
@@ -381,17 +390,33 @@ namespace MindMap.ViewModels
                 return;
             }
 
-            if (current.Parent != null)
+            if (current.Id == RootNode.Id)
             {
-                var siblings = current.Parent.Children;
-                var upper = siblings
-                    .Where(s => s.Position.Y < current.Position.Y)
-                    .OrderByDescending(s => s.Position.Y)
-                    .FirstOrDefault();
-
-                if (upper != null)
+                var jumpTarget = FindOverlappingAbove(current);
+                if (jumpTarget != null)
                 {
-                    SelectedNode = upper;
+                    SelectedNode = jumpTarget;
+                }
+            }
+            else
+            {
+                var siblings = current.Siblings;
+                //if (current.Parent.Id == RootNode.Id)
+                //{
+                //    if (current.IsLeftSide)
+                //    {
+                //        siblings = RootNode.LeftChildren.ToList();
+                //    }
+                //    else
+                //    {
+                //        siblings = RootNode.RightChildren.ToList();
+                //    }
+                //}
+                var currentIndex = siblings.IndexOf(current);
+
+                if (currentIndex > 0)
+                {
+                    SelectedNode = siblings[currentIndex - 1];
                 }
                 else
                 {
@@ -424,17 +449,26 @@ namespace MindMap.ViewModels
                 return;
             }
 
-            if (current.Parent != null)
+            if (current.Id != RootNode.Id)
             {
-                var siblings = current.Parent.Children;
-                var lower = siblings
-                    .Where(s => s.Position.Y > current.Position.Y)
-                    .OrderBy(s => s.Position.Y)
-                    .FirstOrDefault();
+                var siblings = current.Siblings;
+                //var siblings = current.Parent.Children;
+                //if (current.Parent.Id == RootNode.Id)
+                //{
+                //    if (current.IsLeftSide)
+                //    {
+                //        siblings = RootNode.LeftChildren.ToList();
+                //    }
+                //    else
+                //    {
+                //        siblings = RootNode.RightChildren.ToList();
+                //    }
+                //}
+                var currentIndex = siblings.IndexOf(current);
 
-                if (lower != null)
+                if (currentIndex < siblings.Count - 1)
                 {
-                    SelectedNode = lower;
+                    SelectedNode = siblings[currentIndex + 1];
                 }
                 else
                 {
@@ -451,18 +485,19 @@ namespace MindMap.ViewModels
         private bool CanMoveNodeUp()
         {
             var node = SelectedNode;
-            if (node?.Parent == null) return false;
+            if (node == null || node.Id == RootNode.Id) return false;
 
-            var siblings = node.Parent.Children;
+            var siblings = node.Siblings;
             int index = siblings.IndexOf(node);
             return index > 0;
         }
         private void MoveNodeUp()
         {
             var node = SelectedNode;
-            if (node?.Parent == null) return;
+            // 선택된 노드가 없거나, 루트 노드인 경우 무시
+            if (node == null || node.Id == RootNode.Id) return;
 
-            var siblings = node.Parent.Children;
+            var siblings = node.Siblings;
             int index = siblings.IndexOf(node);
             if (index > 0)
             {
@@ -482,9 +517,9 @@ namespace MindMap.ViewModels
         private bool CanMoveNodeDown()
         {
             var node = SelectedNode;
-            if (node?.Parent == null) return false;
+            if (node == null || node.Id == RootNode.Id) return false;
 
-            var siblings = node.Parent.Children;
+            var siblings = node.Siblings;
             int index = siblings.IndexOf(node);
             return index >= 0 && index < siblings.Count - 1;
         }
@@ -492,9 +527,9 @@ namespace MindMap.ViewModels
         private void MoveNodeDown()
         {
             var node = SelectedNode;
-            if (node?.Parent == null) return;
+            if (node == null || node.Id == RootNode.Id) return;
 
-            var siblings = node.Parent.Children;
+            var siblings = node.Siblings;
             int index = siblings.IndexOf(node);
             if (index >= 0 && index < siblings.Count - 1)
             {
@@ -514,7 +549,25 @@ namespace MindMap.ViewModels
         private bool CanMoveNodeLeft()
         {
             var node = SelectedNode;
-            return node?.Parent?.Parent != null;
+            if (node == null || node.Id == RootNode.Id) return false;
+            if (node.IsLeftSide)
+            {
+                return CanMoveNodeToBrotherChild();
+            }
+            else
+                return true;
+        }
+
+        // 이 함수는 node의 조부모 노드가 있다고 가정함. 조부모 노드가 없으면 exception 발생할 수 있음
+        private void MoveToParentSibling(MindMapNodeViewModel node)
+        {
+            var parent = node.Parent;
+            if (parent == null) throw new InvalidOperationException("Parent is null.");
+            if (parent.Parent == null) throw new InvalidOperationException("Grandparent is null.");
+            var grandParent = parent.Parent;
+            RemoveArrow(parent, node);
+            RegisterArrow(grandParent, node);
+            node.MoveToParentYongerSibling();
         }
 
 
@@ -523,62 +576,111 @@ namespace MindMap.ViewModels
             var node = SelectedNode;
             if (node == null || node.Parent == null) return;
 
-            var parent = node.Parent;
-            var grandParent = parent.Parent;
-            if (grandParent == null) return;
+            if (node.IsLeftSide)
+            {
+                MoveNodeToBrotherChild(node);
+            }
+            else
+            {
+                var parent = node.Parent;
+                var grandParent = parent.Parent;
+                if (parent.Id == RootNode.Id)
+                {
+                    // 왼쪽 노드로 이동
+                    parent.RightChildren.Remove(node);
+                    parent.LeftChildren.Add(node);
+                    node.IsLeftSide = true;
+                    static void recursiveUpdate(MindMapNodeViewModel node)
+                    {
+                        node.IsLeftSide = true;
+                        (node.LeftChildren, node.RightChildren) = (node.RightChildren, node.LeftChildren);
+                        foreach (var item in node.LeftChildren)
+                        {
+                            recursiveUpdate(item);
+                        }
+                    }
+                    recursiveUpdate(node);
+                }
+                else
+                {
+                    // 1. 부모에서 자신 제거
+                    MoveToParentSibling(node);
+                }
+            }
 
-            // 1. 부모에서 자신 제거
-            parent.Children.Remove(node);
-            RemoveArrow(parent, node);
-
-            // 2. 부모의 형제 목록에서 자신의 새 위치 계산
-            var siblings = grandParent.Children;
-            int parentIndex = siblings.IndexOf(parent);
-
-            // 3. 부모 바로 뒤에 삽입 (동생으로)
-            int insertIndex = parentIndex + 1;
-            if (insertIndex > siblings.Count)
-                insertIndex = siblings.Count;
-
-            siblings.Insert(insertIndex, node);
-            node.Parent = grandParent;
-            RegisterArrow(grandParent, node);
 
             RequestLayout();
+        }
+
+        private bool CanMoveNodeToBrotherChild()
+        {
+            var node = SelectedNode;
+            if (node == null || node.Id == RootNode.Id) return false;
+            var siblings = node.Siblings;
+            int index = siblings.IndexOf(node);
+            return index > 0; // 앞에 형제가 있어야 함
+        }
+
+        private void MoveNodeToBrotherChild(MindMapNodeViewModel node)
+        {
+            // 부모에서 자신 제거
+            var siblings = node.Siblings;
+            int index = siblings.IndexOf(node);
+            if (index == -1) throw new InvalidOperationException("Node not found in siblings.");
+            if (index == 0) return;
+            var elder = siblings[index - 1]; // 바로 앞의 형
+            var oldParent = node.Parent;
+            RemoveArrow(oldParent, node);
+            RegisterArrow(elder, node);
+            node.MoveToElderSiblingLastChild();
         }
 
         private bool CanMoveNodeRight()
         {
             var node = SelectedNode;
-            if (node?.Parent == null) return false;
+            if (node == null || node.Id == RootNode.Id) return false;
 
-            var siblings = node.Parent.Children;
-            int index = siblings.IndexOf(node);
-            return index > 0; // 앞에 형제가 있어야 함
+            if (node.IsLeftSide)
+            {
+                return true;
+            }
+            return CanMoveNodeToBrotherChild();
         }
 
         private void MoveNodeRight()
         {
             var node = SelectedNode;
-            if (node?.Parent == null) return;
+            if (node == null || node.Id == RootNode.Id) return;
 
-            var oldParent = node.Parent;
-            var siblings = oldParent.Children;
-            int index = siblings.IndexOf(node);
-            if (index <= 0) return;
-
-            var elder = siblings[index - 1]; // 바로 앞의 형
-            oldParent.Children.Remove(node);
-            RemoveArrow(oldParent, node);
-
-            elder.Children.Add(node);
-            node.Parent = elder;
-            RegisterArrow(elder, node);
-
-            // 위치 조정: 형보다 오른쪽/아래
-            double newX = elder.Position.X + 150;
-            double newY = elder.Position.Y + 100;
-            node.Position = new Point(newX, newY);
+            if (node.IsLeftSide)
+            {
+                if (node.Parent.Id == RootNode.Id)
+                {
+                    var parent = node.Parent;
+                    // 왼쪽에서 오른쪽으로 이동
+                    parent.LeftChildren.Remove(node);
+                    parent.RightChildren.Add(node);
+                    node.IsLeftSide = false;
+                    static void recursiveUpdate(MindMapNodeViewModel node)
+                    {
+                        node.IsLeftSide = false;
+                        (node.LeftChildren, node.RightChildren) = (node.RightChildren, node.LeftChildren);
+                        foreach (var item in node.RightChildren)
+                        {
+                            recursiveUpdate(item);
+                        }
+                    }
+                    recursiveUpdate(node);
+                }
+                else
+                {
+                    MoveToParentSibling(node);
+                }
+            }
+            else
+            {
+                MoveNodeToBrotherChild(node);
+            }
 
             RequestLayout();
         }

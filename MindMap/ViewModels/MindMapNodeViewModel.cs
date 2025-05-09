@@ -11,13 +11,192 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Xml.Linq;
 
 namespace MindMap.ViewModels
 {
     internal class MindMapNodeViewModel : INotifyPropertyChanged, IPosition
     {
-        static double defaultWidth = 60;
         public MindMapNode Model { get; }
+
+        //private MindMapNodeViewModel? _parent;
+
+        public MindMapNodeViewModel? Parent {
+            get
+            {
+                if (Model.Parent == null)
+                    return null;
+                return RootViewModel.Nodes
+                    .First(n => n.Id == Model.Parent.Id);
+            }
+            set
+            {
+                if (value == null)
+                    Model.Parent = null;
+                else
+                    Model.Parent = value.Model;
+            }
+        }
+
+        public List<MindMapNodeViewModel> LeftChildren = new();
+        public List<MindMapNodeViewModel> RightChildren = new();
+        public bool IsRoot => Model.IsRoot; // 최상위 노드 여부
+
+        //public List<MindMapNodeViewModel> Children { get; set; }
+
+        public List<MindMapNodeViewModel>? Siblings
+        {
+            get
+            {
+                if (IsRoot)
+                {
+                    return null;
+                }
+                if (IsLeftSide)
+                {
+                    return Parent.LeftChildren;
+                }
+                else
+                {
+                    return Parent.RightChildren;
+                }
+            }
+        }
+
+        public void AddChild(MindMapNodeViewModel child)
+        {
+            if (IsRoot)
+            {
+                if(LeftChildren.Count > 0)
+                {
+                    LeftChildren.Add(child);
+                    Model.LeftChildren.Add(child.Model);
+                }
+                else
+                {
+                    RightChildren.Add(child);
+                    Model.RightChildren.Add(child.Model);
+                }
+            }
+            else if (child.IsLeftSide)
+            {
+                LeftChildren.Add(child);
+                Model.LeftChildren.Add(child.Model);
+            }
+            else
+            {
+                RightChildren.Add(child);
+                Model.RightChildren.Add(child.Model);
+            }
+        }
+
+        public void AddChildAt(MindMapNodeViewModel child, int idx)
+        {
+            if (IsRoot)
+            {
+                if (child.IsLeftSide)
+                {
+                    LeftChildren.Insert(idx, child);
+                    Model.LeftChildren.Insert(idx, child.Model);
+                }
+                else
+                {
+                    RightChildren.Insert(idx, child);
+                    Model.RightChildren.Insert(idx, child.Model);
+                }
+            }
+            else if (child.IsLeftSide)
+            {
+                LeftChildren.Insert(idx, child);
+                Model.LeftChildren.Insert(idx, child.Model);
+            }
+            else
+            {
+                RightChildren.Insert(idx, child);
+                Model.RightChildren.Insert(idx, child.Model);
+            }
+        }
+
+        public void RemoveChild(MindMapNodeViewModel child)
+        {
+            if (child.IsLeftSide)
+            {
+                // 하위 트리 제거
+                var grandChildren = child.LeftChildren.ToList();
+                foreach (var grandChild in grandChildren)
+                {
+                    child.RemoveChild(grandChild);
+                }
+                child.LeftChildren.Clear();
+                // 자식 제거
+                Model.RemoveChild(child.Model);
+                LeftChildren.Remove(child);
+            }
+            else
+            {
+                // 하위 트리 제거
+                var grandChildren = child.RightChildren.ToList();
+                foreach (var grandChild in grandChildren)
+                {
+                    child.RemoveChild(grandChild);
+                }
+                child.RightChildren.Clear();
+                // 자식 제거
+                Model.RemoveChild(child.Model);
+                RightChildren.Remove(child);
+            }
+        }
+
+        public void DetachChild(MindMapNodeViewModel child)
+        {
+            if (child.IsLeftSide)
+            {
+                LeftChildren.Remove(child);
+                Model.DetachChild(child.Model);
+            }
+            else
+            {
+                RightChildren.Remove(child);
+                Model.DetachChild(child.Model);
+            }
+        }
+
+        public void MoveToParentYongerSibling()
+        {
+            if (Parent == null) throw new InvalidOperationException("Parent is null.");
+            if (Parent.Parent == null) throw new InvalidOperationException("Grandparent is null.");
+            var grandParent = Parent.Parent;
+            var siblings = Parent.IsLeftSide
+                ? Parent.Parent.LeftChildren
+                : Parent.Parent.RightChildren;
+            var index = siblings.IndexOf(Parent);
+            if (index == -1)
+                throw new InvalidOperationException("Parent is not found in siblings.");
+            Parent.DetachChild(this);
+            siblings.Insert(index + 1, this);
+            grandParent.Model.AddChildAt(Model, index + 1);
+        }
+
+        /* 형의 마지막 자식 노드로 이동 */
+        public bool MoveToElderSiblingLastChild()
+        {
+            if (Parent == null) throw new InvalidOperationException("Root cannot move to elder sibling's child.");
+
+            var siblings = IsLeftSide ? Parent.LeftChildren : Parent.RightChildren;
+            var index = siblings.IndexOf(this);
+            if (index == -1)
+                throw new InvalidOperationException("Node is not found in siblings.");
+            if (index == 0)
+                return false;
+            var elderSibling = siblings[index - 1];
+            if (IsLeftSide)
+                elderSibling.LeftChildren.Add(this);
+            else
+                elderSibling.RightChildren.Add(this);
+            Parent.DetachChild(this);
+            elderSibling.Model.AddChild(Model);
+            return true;
+        }
 
         public double ImagePadding => 20;
 
@@ -267,8 +446,6 @@ namespace MindMap.ViewModels
             }
         }
 
-        public MindMapNodeViewModel? Parent { get; set; }
-        public List<MindMapNodeViewModel> Children { get; } = new();
 
         //public MindMapNodeViewModel(MindMapNode model)
         //{
