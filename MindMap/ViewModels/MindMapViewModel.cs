@@ -1,4 +1,5 @@
-﻿using MindMap.Common;
+﻿using Microsoft.Win32;
+using MindMap.Common;
 using MindMap.Models;
 using MindMap.Repositiory;
 using MindMap.Services;
@@ -10,6 +11,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 
 namespace MindMap.ViewModels
@@ -131,13 +133,31 @@ namespace MindMap.ViewModels
             RecalculateLayoutCommand = new RelayCommand(_ => RequestLayout());
             SaveCommand = new RelayCommand(_ =>
             {
-                var service = new MindMapPersistenceService();
-                service.Save("map.json", this);
+                var dialog = new SaveFileDialog
+                {
+                    Filter = "Mind Map Files (*.json)|*.json",
+                    DefaultExt = ".json",
+                    FileName = "mindmap.json"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    var service = new MindMapPersistenceService();
+                    service.Save(dialog.FileName, this);
+                }
+                //var service = new MindMapPersistenceService();
+                //service.Save("map.json", this);
             }, _ => !IsEditMode); // 편집 모드일 때는 저장 불가
             LoadCommand = new RelayCommand(_ =>
             {
+                var dialog = new OpenFileDialog
+                {
+                    Filter = "Mind Map Files (*.json)|*.json",
+                    DefaultExt = ".json"
+                };
+                if (dialog.ShowDialog() != true) return;
                 var service = new MindMapPersistenceService();
-                var (loadedDocument, loadedViewState) = service.Load("map.json");
+                var (loadedDocument, loadedViewState) = service.Load(dialog.FileName);
                 document = loadedDocument;
                 Nodes.Clear();
                 RootNodes.Clear();
