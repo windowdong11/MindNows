@@ -22,6 +22,8 @@
         <KeyBinding Key="Space" Command="{Binding EnterEditModeCommand}" />
         <KeyBinding Key="Escape" Command="{Binding ExitEditModeCommand}" />
         <KeyBinding Key="Enter" Modifiers="Shift" Command="{Binding AddRootCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}"/>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding LoadCommand}"/>
     </Window.InputBindings>
     <i:Interaction.Behaviors>
         <behavior:KeyToCommandBehavior Key="Back"

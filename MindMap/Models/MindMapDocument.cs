@@ -7,7 +7,7 @@ namespace MindMap.Models
     public class MindMapDocument
     {
         public List<MindMapNode> RootNodes { get; } = new List<MindMapNode>();
-        public List<MindMapArrow> Arrows { get; } = [];
+        //public List<MindMapArrow> Arrows { get; } = [];
         //internal List<MindMapNode> Nodes { get; } = new List<MindMapNode>();
 
         /* 노드 동적 추가 예시 */
@@ -18,6 +18,9 @@ namespace MindMap.Models
         //    return newNode;
         //}
         //public MindMapNode RootNode { get; set; }
+
+        public MindMapDocument()
+        { }
 
         public MindMapDocument(MindMapNode root)
         {

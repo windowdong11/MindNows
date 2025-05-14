@@ -1,5 +1,6 @@
 ﻿using MindMap.Common;
 using MindMap.Models;
+using MindMap.Repositiory;
 using MindMap.Services;
 using System;
 using System.Collections.Generic;
@@ -45,7 +46,7 @@ namespace MindMap.ViewModels
         }
         public ObservableCollection<MindMapNodeViewModel> Nodes { get; } = new();
         //public MindMapNodeViewModel RootNode;
-        public List<MindMapNodeViewModel> RootNodes { get; } = new();
+        public List<MindMapNodeViewModel> RootNodes { get; set; } = new();
 
         private MindMapNodeViewModel? _selectedNode;
         public MindMapNodeViewModel? SelectedNode
@@ -128,6 +129,32 @@ namespace MindMap.ViewModels
             EnterEditModeCommand = new RelayCommand(_ => EnterEditMode(), _ => !IsEditMode && SelectedNode != null);
             ExitEditModeCommand = new RelayCommand(_ => ExitEditMode(), _ => IsEditMode);
             RecalculateLayoutCommand = new RelayCommand(_ => RequestLayout());
+            SaveCommand = new RelayCommand(_ =>
+            {
+                var service = new MindMapPersistenceService();
+                service.Save("map.json", this);
+            }, _ => !IsEditMode); // 편집 모드일 때는 저장 불가
+            LoadCommand = new RelayCommand(_ =>
+            {
+                var service = new MindMapPersistenceService();
+                var (loadedDocument, loadedViewState) = service.Load("map.json");
+                document = loadedDocument;
+                Nodes.Clear();
+                RootNodes.Clear();
+                Arrows.Clear();
+                var result = loadedDocument.RootNodes.Select(rootModel => BuildViewModelTree(rootModel, this)).ToList();
+                foreach (var (vm, nodeList) in result)
+                {
+                    RootNodes.Add(vm);
+                    Nodes.Add(vm);
+                    foreach (var node in nodeList)
+                    {
+                        Nodes.Add(node);
+                    }
+                }
+                MindMapPersistenceService.ApplyViewState(this, loadedViewState);
+                RequestLayout();
+            }, _ => !IsEditMode); // 편집 모드일 때는 불러오기 불가
             AddRootCommand = new RelayCommand(_ =>
             {
                 var rootModel = new MindMapNode
@@ -140,6 +167,29 @@ namespace MindMap.ViewModels
                 Nodes.Add(rootVM);
                 SelectedNode = rootVM;
             }, _ => !IsEditMode); // 루트 노드는 최대 2개까지
+        }
+
+        private (MindMapNodeViewModel, List<MindMapNodeViewModel>) BuildViewModelTree(MindMapNode model, MindMapViewModel rootViewModel)
+        {
+            var vm = new MindMapNodeViewModel(model, rootViewModel);
+            var nodeList = new List<MindMapNodeViewModel> { vm };
+            foreach (var childModel in model.LeftChildren)
+            {
+                var (childVm, nodes) = BuildViewModelTree(childModel, rootViewModel);
+                childVm.Parent = vm;
+                vm.LeftChildren.Add(childVm);
+                nodeList.AddRange(nodes);
+                RegisterArrow(vm, childVm);
+            }
+            foreach (var childModel in model.RightChildren)
+            {
+                var (childVm, nodes) = BuildViewModelTree(childModel, rootViewModel);
+                childVm.Parent = vm;
+                vm.RightChildren.Add(childVm);
+                nodeList.AddRange(nodes);
+                RegisterArrow(vm, childVm);
+            }
+            return (vm, nodeList);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -209,6 +259,10 @@ namespace MindMap.ViewModels
         public ICommand MoveNodeLeftCommand { get; }
         public ICommand MoveNodeRightCommand { get; }
 
+        /* ---------- 저장/불러오기 ---------- */
+
+        public ICommand SaveCommand { get; }
+        public ICommand LoadCommand { get; }
 
         private void AddChild()
         {

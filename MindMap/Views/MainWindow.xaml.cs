@@ -1,5 +1,6 @@
 ﻿// Views/MainWindow.xaml.cs
 using MindMap.Models;
+using MindMap.Repositiory;
 using MindMap.Services;
 using MindMap.ViewModels;
 using System;
@@ -15,10 +16,15 @@ namespace MindMap
         //private readonly IMindMapLayoutEngine _layoutEngine = new TopDownTreeLayoutEngine();
         private readonly ILayoutService _layoutEngine = new LayoutService();
         private readonly MindMapDocument document;
+        //private MindMapPersistenceService _persistenceService = new MindMapPersistenceService();
 
         public MainWindow()
         {
             InitializeComponent();
+
+            //var (loadedDocument, loadedViewState) = _persistenceService.Load("map.json");
+            //document = loadedDocument;
+            //_persistenceService.ApplyViewState(_viewModel, loadedViewState);
 
             var root = new MindMapNode
             {

@@ -8,8 +8,24 @@ namespace MindMap.ViewModels
         public MindMapNodeViewModel From { get; }
         public MindMapNodeViewModel To { get; }
 
-        public Point Start => new Point(From.Position.X + From.Width - 8, From.Position.Y + From.Height / 2.0);
-        public Point End => new Point(To.Position.X + 8, To.Position.Y + To.Height / 2.0);
+        public Point Start => 
+                To.IsLeftSide
+            ? LeftMidPoint(From)
+            : RightMidPoint(From);
+        public Point End => 
+            To.IsLeftSide
+            ? RightMidPoint(To)
+            : LeftMidPoint(To);
+
+        private Point LeftMidPoint(MindMapNodeViewModel node)
+        {
+            return new Point(node.Position.X + 8, node.Position.Y + node.Height / 2.0);
+        }
+
+        private Point RightMidPoint(MindMapNodeViewModel node)
+        {
+            return new Point(node.Position.X + node.Width - 8, node.Position.Y + node.Height / 2.0);
+        }
 
         public MindMapArrowViewModel(MindMapNodeViewModel from, MindMapNodeViewModel to)
         {
