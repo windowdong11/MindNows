@@ -35,9 +35,9 @@ namespace MindMap
                 var focused = Keyboard.FocusedElement;
                 Debug.WriteLine($"초기 포커스: {focused}");
             };
-            _viewModel.LayoutRequested += RefreshLayout;
-            PreviewKeyDown += MainWindow_PreviewKeyDown;
-            RefreshLayout();
+            //_viewModel.LayoutRequested += RefreshLayout;
+            //PreviewKeyDown += MainWindow_PreviewKeyDown;
+            //RefreshLayout();
         }
 
         private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -53,9 +53,9 @@ namespace MindMap
             Console.WriteLine($"포커스된 스코프: {focusedScope}");
         }
 
-        void RefreshLayout()
-        {
-            _layoutEngine.RecalculateLayout(_viewModel.RootNode);
-        }
+        //void RefreshLayout()
+        //{
+        //    _layoutEngine.RecalculateLayout(_viewModel.RootNode);
+        //}
     }
 }

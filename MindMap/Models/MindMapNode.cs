@@ -18,8 +18,8 @@ namespace MindMap.Models
 
         public MindMapNode? Parent { get; set; }
         //public List<MindMapNode> Children { get; } = new();
-        public List<MindMapNode> LeftChildren { get; } = new();  // 왼쪽 자식 노드
-        public List<MindMapNode> RightChildren { get; } = new(); // 오른쪽 자식 노드
+        public List<MindMapNode> LeftChildren { get; set; } = new();  // 왼쪽 자식 노드
+        public List<MindMapNode> RightChildren { get; set; } = new(); // 오른쪽 자식 노드
 
         public bool IsLeftSide { get; set; }        // 최상위 자식 분기 여부
 

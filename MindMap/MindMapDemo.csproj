@@ -60,6 +60,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Behavior\CameraZoomBehavior.cs" />
+    <Compile Include="Behavior\CanvasDragBehavior.cs" />
     <Compile Include="Behavior\DragMoveBehavior.cs" />
     <Compile Include="Behavior\DragThumbBehavior.cs" />
     <Compile Include="Behavior\EscKeyToCommandBehavior.cs" />

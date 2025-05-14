@@ -5,6 +5,7 @@
         xmlns:vm="clr-namespace:MindMap.ViewModels"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:behavior="clr-namespace:MindMap.Behavior"
+        Background="AliceBlue"
         Title="Mind Map" Height="800" Width="1200">
     <Window.InputBindings>
         <KeyBinding Key="Tab" Command="{Binding AddChildCommand}" />
@@ -20,6 +21,7 @@
         <KeyBinding Key="Right" Modifiers="Control" Command="{Binding MoveNodeRightCommand}" />
         <KeyBinding Key="Space" Command="{Binding EnterEditModeCommand}" />
         <KeyBinding Key="Escape" Command="{Binding ExitEditModeCommand}" />
+        <KeyBinding Key="Enter" Modifiers="Shift" Command="{Binding AddRootCommand}"/>
     </Window.InputBindings>
     <i:Interaction.Behaviors>
         <behavior:KeyToCommandBehavior Key="Back"
@@ -28,52 +30,64 @@
                                     Modifiers="Control"
                                     Command="{Binding SelectedNode.PasteImageCommand}" />
     </i:Interaction.Behaviors>
-    <Canvas x:Name="MindMapCanvas" Background="#455A65">
-        <!-- 선 출력 -->
-        <ItemsControl ItemsSource="{Binding Arrows}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <Canvas Focusable="True"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Line
-                    X1="{Binding Start.X}"
-                    Y1="{Binding Start.Y}"
-                    X2="{Binding End.X}"
-                    Y2="{Binding End.Y}"
-                    Stroke="Gray"
-                    StrokeThickness="2" />
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+    <Grid Background="#455A65">
+        <i:Interaction.Behaviors>
+            <behavior:CanvasDragBehavior DragLayer="{Binding ElementName=MindMapCanvas}"/>
+            <behavior:CanvasZoomBehavior ViewModel="{Binding}" />
+        </i:Interaction.Behaviors>
+        <Canvas x:Name="MindMapCanvas" Background="#455A65">
+            <Canvas.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}" />
+                    <TranslateTransform X="{Binding OffsetX}" Y="{Binding OffsetY}" />
+                </TransformGroup>
+            </Canvas.RenderTransform>
+            <!-- 선 출력 -->
+            <ItemsControl ItemsSource="{Binding Arrows}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas Focusable="True"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Line
+            X1="{Binding Start.X}"
+            Y1="{Binding Start.Y}"
+            X2="{Binding End.X}"
+            Y2="{Binding End.Y}"
+            Stroke="Gray"
+            StrokeThickness="2" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <!-- Nodes -->
-        <ItemsControl ItemsSource="{Binding Nodes}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <Canvas />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
+            <ItemsControl ItemsSource="{Binding Nodes}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
 
-            <ItemsControl.ItemContainerStyle>
-                <Style>
-                    <Setter Property="Canvas.Left" Value="{Binding Position.X}" />
-                    <Setter Property="Canvas.Top" Value="{Binding Position.Y}" />
-                </Style>
-            </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemContainerStyle>
+                    <Style>
+                        <Setter Property="Canvas.Left" Value="{Binding Position.X}" />
+                        <Setter Property="Canvas.Top" Value="{Binding Position.Y}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
 
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type vm:MindMapNodeViewModel}">
-                    <local:NodeControl>
-                        <i:Interaction.Behaviors>
-                            <behavior:DragMoveBehavior TargetPanel="{Binding ElementName=MindMapCanvas}"
-                                                       OnDragCompletedCommand="{Binding DataContext.RecalculateLayoutCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                        </i:Interaction.Behaviors>
-                    </local:NodeControl>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </Canvas>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:MindMapNodeViewModel}">
+                        <local:NodeControl>
+                            <i:Interaction.Behaviors>
+                                <behavior:DragMoveBehavior TargetPanel="{Binding ElementName=MindMapCanvas}"
+                                               OnDragCompletedCommand="{Binding DataContext.RecalculateLayoutCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </i:Interaction.Behaviors>
+                        </local:NodeControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Canvas>
+    </Grid>
 </Window>
