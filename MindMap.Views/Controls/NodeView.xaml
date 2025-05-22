@@ -1,0 +1,50 @@
+﻿<UserControl x:Class="MindMap.Views.Controls.NodeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MindMap.Views.Controls"
+             xmlns:conv="clr-namespace:MindMap.Views.Converters"
+             xmlns:vm="clr-namespace:MindMap.ViewModels;assembly=MindMap.ViewModels"
+             mc:Ignorable="d" 
+             Width="Auto" Height="Auto">
+    <UserControl.Resources>
+        <conv:ImagePathToBitmapConverter x:Key="PathToBitmap"/>
+        <conv:BoolToBrushConverter      x:Key="BoolToBrush"
+                                    TrueBrush="#000"/>
+    </UserControl.Resources>
+    <StackPanel>
+        <!-- ───── 노드 본체 ───── -->
+        <Border CornerRadius="8" Padding="8" Margin="4"
+                BorderBrush="{Binding IsSelected, Converter={StaticResource BoolToBrush}}"
+                Background="#FFF" BorderThickness="3">
+            <StackPanel>
+                <Image Source="{Binding ImagePath,
+                Converter={StaticResource PathToBitmap}}"
+                   Width="120" Height="Auto"/>
+
+                <TextBlock Text="{Binding Text}"
+                       TextWrapping="Wrap"
+                       FontSize="14"
+                       HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- ───── 자식 노드 렌더 ───── -->
+        <ItemsControl ItemsSource="{Binding Children}">
+            <ItemsControl.ItemTemplate>
+                <!-- NodeVM → 다시 NodeView (재귀) -->
+                <DataTemplate DataType="{x:Type vm:NodeVM}">
+                    <local:NodeView/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+
+            <!-- 간단한 들여쓰기용 -->
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Margin="24,0,0,0"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

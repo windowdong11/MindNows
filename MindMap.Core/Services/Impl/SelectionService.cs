@@ -1,0 +1,94 @@
+﻿using MindMap.Core.Models;
+using MindMap.Core.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MindMap.Core.Services.Impl;
+
+public sealed class SelectionService : ISelectionService
+{
+    private readonly HashSet<NodeModel> _multi = new();
+    //private readonly Dictionary<NodeModel, NodeModel?> _parent = new();
+    public NodeModel? Current { get; private set; }
+    public IReadOnlyCollection<NodeModel> Multi => _multi;
+    public event EventHandler? SelectionChanged;
+
+    public void Select(NodeModel? node)
+    {
+        if (Current == node && _multi.Count == 1) return;
+
+        _multi.Clear();
+        Current = node;
+        if (node != null) _multi.Add(node);
+
+        Raise();
+    }
+
+    public void ExpandRange(Direction dir)
+    {
+        if (Current is null) return;
+        var parent = _parentMap.GetValueOrDefault(Current);
+        if (parent is null) return;
+
+        var list = parent.Children;
+        var idx = list.IndexOf(Current);
+        var next = dir == Direction.Up ? idx - 1
+                 : dir == Direction.Down ? idx + 1 : -1;
+        if (next < 0 || next >= list.Count) return;
+
+        var target = list[next];
+
+        // 이미 포함돼 있으면 범위 축소, 아니면 확장
+        if (_multi.Contains(target))
+            _multi.Remove(Current);   // 방향대로 한 칸 축소
+        else
+            _multi.Add(target);       // 확장
+
+        Current = target;
+        Raise();
+    }
+    public void Navigate(Direction dir)
+    {
+        if (Current is null) return;
+
+        // 1) 간단 규칙: 형제 간 ↑/↓, 부모/첫-자식 ←/→
+        var parent = _parentMap.GetValueOrDefault(Current);
+        if (dir is Direction.Up or Direction.Down)
+        {
+            if (parent is null) return;                       // 루트는 형/동생 없음
+            var list = parent.Children;
+            var idx = list.IndexOf(Current);
+            var next = dir == Direction.Up ? idx - 1
+                     : dir == Direction.Down ? idx + 1 : -1;
+            if (next >= 0 && next < list.Count)
+                Select(list[next]);
+            else
+                Select(Current);       // 범위 초과 시 선택 해제
+        }
+        else // Left/Right
+        {
+            if (dir == Direction.Left && parent is not null)
+            {
+                Select(parent);                               // 부모
+            }
+            else if (dir == Direction.Right)
+            {
+                if (Current.Children.Any())
+                    Select(Current.Children.First());             // 첫 자식
+                else
+                    Select(Current);
+            }
+        }
+    }
+
+    /// <summary>트리 추가/삭제 시 부모 맵 갱신용</summary>
+    public void RegisterParent(NodeModel child, NodeModel? parent)
+        => _parentMap[child] = parent;
+
+    private readonly Dictionary<NodeModel, NodeModel?> _parentMap = new();
+
+    private void Raise() => SelectionChanged?.Invoke(this, EventArgs.Empty);
+}

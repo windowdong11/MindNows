@@ -1,0 +1,81 @@
+﻿<Window x:Class="MindMap.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MindMap.Views.Controls;assembly=MindMap.Views"
+        xmlns:vm="clr-namespace:MindMap.ViewModels;assembly=MindMap.ViewModels"
+        xmlns:core="clr-namespace:MindMap.Core.Services;assembly=MindMap.Core"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Window.InputBindings>
+        <KeyBinding Key="Up"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="{x:Static core:Direction.Up}" />
+        <KeyBinding Key="Down"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="{x:Static core:Direction.Down}" />
+        <KeyBinding Key="Left"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="{x:Static core:Direction.Left}" />
+        <KeyBinding Key="Right"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="{x:Static core:Direction.Right}" />
+        <KeyBinding Key="Up"   Modifiers="Shift"
+                Command="{Binding ExpandSelectionCommand}"
+                CommandParameter="{x:Static core:Direction.Up}" />
+        <KeyBinding Key="Down" Modifiers="Shift"
+                Command="{Binding ExpandSelectionCommand}"
+                CommandParameter="{x:Static core:Direction.Down}" />
+    </Window.InputBindings>
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+		 <!--임시: StackPanel로 수직 배치--> 
+		<ItemsControl ItemsSource="{Binding Roots}">
+			<ItemsControl.ItemTemplate>
+				<DataTemplate DataType="{x:Type vm:NodeVM}">
+					<local:NodeView/>
+					 <!--NodeView UserControl--> 
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+	</ScrollViewer>
+    <!--<ScrollViewer>
+        <Canvas x:Name="MindCanvas">
+            <ItemsControl ItemsSource="{Binding Roots}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas/>
+                        --><!-- 절대 위치 --><!--
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                        <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:NodeVM}">
+                        <local:NodeView/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            --><!-- Edge Layer --><!--
+            <ItemsControl ItemsSource="{Binding Edges}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Path Data="{Binding Geometry}"
+                          Stroke="#666" StrokeThickness="1.4"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Canvas>
+    </ScrollViewer>-->
+</Window>
