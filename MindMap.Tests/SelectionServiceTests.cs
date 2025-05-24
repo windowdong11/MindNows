@@ -64,5 +64,50 @@ public class SelectionServiceTests
             sel.Multi.Should().BeEquivalentTo(new[] { a, b });
             sel.Current.Should().Be(b);
         }
+
+        [Fact]
+        public void CtrlLeft_RightChild_Promotes_AfterParent()
+        {
+            var root = new NodeModel(Guid.NewGuid(), "Root");
+            var p = new NodeModel(Guid.NewGuid(), "P");
+            var a = new NodeModel(Guid.NewGuid(), "A") { Side = SideEnum.Right };
+            var s = new NodeModel(Guid.NewGuid(), "S");             // Parent sibling
+
+            root.Children.Add(p);
+            root.Children.Add(s);
+            p.Children.Add(a);
+
+            var sel = new SelectionService();
+            sel.RegisterParent(p, root); sel.RegisterParent(s, root);
+            sel.RegisterParent(a, p);
+
+            var mut = new NodeMutationService(sel);
+            mut.Reparent(a, ReparentAction.Left).Should().BeTrue();
+
+            root.Children[1].Should().Be(a);                        // after parent
+            sel.GetParent(a).Should().Be(root);
+        }
+
+        [Fact]
+        public void CtrlRight_RightChild_Demotes_ToPrevSibling()
+        {
+            var root = new NodeModel(Guid.NewGuid(), "Root");
+            var p = new NodeModel(Guid.NewGuid(), "P");
+            var a = new NodeModel(Guid.NewGuid(), "A") { Side = SideEnum.Right };
+            var prev = new NodeModel(Guid.NewGuid(), "Prev");
+            //p.Children.AddRange(new[] { prev, a });
+            p.Children.Add(prev);
+            p.Children.Add(a);
+
+            var sel = new SelectionService();
+            sel.RegisterParent(p, root);
+            sel.RegisterParent(prev, p); sel.RegisterParent(a, p);
+
+            var mut = new NodeMutationService(sel);
+            mut.Reparent(a, ReparentAction.Right).Should().BeTrue();
+
+            prev.Children.Last().Should().Be(a);
+            sel.GetParent(a).Should().Be(prev);
+        }
     }
 }

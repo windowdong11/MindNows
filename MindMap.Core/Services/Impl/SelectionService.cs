@@ -89,6 +89,8 @@ public sealed class SelectionService : ISelectionService
         => _parentMap[child] = parent;
 
     private readonly Dictionary<NodeModel, NodeModel?> _parentMap = new();
+    public NodeModel? GetParent(NodeModel child)
+    => _parentMap.TryGetValue(child, out var p) ? p : null;
 
     private void Raise() => SelectionChanged?.Invoke(this, EventArgs.Empty);
 }

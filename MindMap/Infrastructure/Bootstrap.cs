@@ -22,6 +22,7 @@ public static class Bootstrap
         // Singleton 서비스 등록
         sc.AddSingleton<ILayoutService, LayoutService>();
         sc.AddSingleton<ISelectionService, SelectionService>();
+        sc.AddSingleton<INodeMutationService, NodeMutationService>();
 
         // ViewModels
         sc.AddSingleton<DocumentVM>();

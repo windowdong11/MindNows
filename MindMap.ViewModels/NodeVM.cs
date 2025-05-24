@@ -2,6 +2,7 @@
 using MindMap.Core.Models;
 using MindMap.Core.Services;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace MindMap.ViewModels;
 
@@ -27,6 +28,8 @@ public partial class NodeVM : ObservableObject
             //OnPropertyChanged(nameof(X));   // 위치 변화도 갱신
             //OnPropertyChanged(nameof(Y));
         };
+
+        _model.Children.CollectionChanged += OnModelChildrenChanged;
     }
 
     // ─────────── Properties ───────────
@@ -43,6 +46,24 @@ public partial class NodeVM : ObservableObject
         set { _model.ImagePath = value; OnPropertyChanged(nameof(ImagePath)); }
     }
 
+    private void OnModelChildrenChanged(object? s, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems is not null)
+        {
+            foreach (NodeModel added in e.NewItems.Cast<NodeModel>())
+                Children.Add(new NodeVM(added, _sel));
+        }
+
+        if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems is not null)
+        {
+            foreach (NodeModel removed in e.OldItems.Cast<NodeModel>())
+            {
+                var childVm = Children.FirstOrDefault(vm => vm.Model == removed);
+                if (childVm != null)
+                    Children.Remove(childVm);
+            }
+        }
+    }
     public ObservableCollection<NodeVM> Children { get; }  // 로직·이동·선 연결용
     public bool IsSelected => _sel.Current == _model || _sel.Multi.Contains(_model);
     public NodeModel Model => _model;

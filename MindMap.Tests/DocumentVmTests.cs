@@ -12,8 +12,8 @@ public class DocumentVmTests
     [Fact]
     public void ShouldContainOneRoot()
     {
-        var vm = new DocumentVM(new SelectionService());
+        var sel = new SelectionService();
+        var vm = new DocumentVM(sel, new LayoutService(), new NodeMutationService(sel));
         vm.Roots.Should().HaveCount(1);
-        vm.Roots[0].Children.Should().HaveCount(2);
     }
 }

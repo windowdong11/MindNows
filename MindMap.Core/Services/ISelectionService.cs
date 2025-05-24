@@ -17,4 +17,6 @@ public interface ISelectionService
     void ExpandRange(Direction dir);        // Shift+↑/↓
     void Navigate(Direction dir);           // 화살표
     void RegisterParent(NodeModel child, NodeModel? parent);
+
+    public NodeModel? GetParent(NodeModel child);
 }

@@ -6,9 +6,17 @@
         xmlns:local="clr-namespace:MindMap.Views.Controls;assembly=MindMap.Views"
         xmlns:vm="clr-namespace:MindMap.ViewModels;assembly=MindMap.ViewModels"
         xmlns:core="clr-namespace:MindMap.Core.Services;assembly=MindMap.Core"
+        xmlns:conv="clr-namespace:MindMap.Views.Converters;assembly=MindMap.Views"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Window.InputBindings>
+        <!-- Phase 2 단일 방향키 … -->
+        <KeyBinding Key="Up"   Modifiers="Ctrl"
+                Command="{Binding MoveSiblingCommand}"
+                CommandParameter="{x:Static core:Direction.Up}" />
+        <KeyBinding Key="Down" Modifiers="Ctrl"
+                Command="{Binding MoveSiblingCommand}"
+                CommandParameter="{x:Static core:Direction.Down}" />
         <KeyBinding Key="Up"
                 Command="{Binding NavigateCommand}"
                 CommandParameter="{x:Static core:Direction.Up}" />
@@ -27,31 +35,74 @@
         <KeyBinding Key="Down" Modifiers="Shift"
                 Command="{Binding ExpandSelectionCommand}"
                 CommandParameter="{x:Static core:Direction.Down}" />
+        <KeyBinding Key="Left"  Modifiers="Ctrl"
+            Command="{Binding ReparentCommand}"
+            CommandParameter="{x:Static core:ReparentAction.Left}" />
+        <KeyBinding Key="Right" Modifiers="Ctrl"
+            Command="{Binding ReparentCommand}"
+            CommandParameter="{x:Static core:ReparentAction.Right}" />
     </Window.InputBindings>
+    <Window.Resources>
+        <conv:EdgeInfoToGeometryConverter x:Key="Edge2Geo"/>
+    </Window.Resources>
     <ScrollViewer HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto">
-        <ItemsControl ItemsSource="{Binding AllNodes}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <Canvas/>
-                    <!-- 단일 Canvas -->
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
+        <Grid x:Name="World"
+          ClipToBounds="False">
+            <Grid.RenderTransform>
+                <!-- 팬/줌 서비스가 앞으로 바인딩할 Transform -->
+                <TransformGroup>
+                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1"/>
+                    <TranslateTransform x:Name="PanTransform" X="0" Y="0"/>
+                </TransformGroup>
+            </Grid.RenderTransform>
 
-            <!-- 각 노드의 Canvas 좌표 바인딩 -->
-            <ItemsControl.ItemContainerStyle>
-                <Style TargetType="ContentPresenter">
-                    <Setter Property="Canvas.Left" Value="{Binding Model.Position.X}"/>
-                    <Setter Property="Canvas.Top"  Value="{Binding Model.Position.Y}"/>
-                </Style>
-            </ItemsControl.ItemContainerStyle>
+            <!-- ② Edge 레이어 (z-index 0) -->
+            <ItemsControl ItemsSource="{Binding Edges}"
+                      Panel.ZIndex="0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas/>
+                        <!-- 절대 좌표 -->
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Canvas.Left" Value="0"/>
+                        <Setter Property="Canvas.Top"  Value="0"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:EdgeVM}">
+                        <Path Stroke="#666" StrokeThickness="1.5"
+                          Data="{Binding Info,
+                                 Converter={StaticResource Edge2Geo}}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type vm:NodeVM}">
-                    <local:NodeView/>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            <!-- ③ Node 레이어 (z-index 1) -->
+            <ItemsControl ItemsSource="{Binding AllNodes}"
+                      Panel.ZIndex="1">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas/>
+                        <!-- 절대 좌표 -->
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Canvas.Left" Value="{Binding Model.Position.X}"/>
+                        <Setter Property="Canvas.Top"  Value="{Binding Model.Position.Y}"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:NodeVM}">
+                        <local:NodeView/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
     </ScrollViewer>
     <!--<ScrollViewer>
         <Canvas x:Name="MindCanvas">
