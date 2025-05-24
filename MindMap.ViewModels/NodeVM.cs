@@ -34,18 +34,16 @@ public partial class NodeVM : ObservableObject
     public string? Text
     {
         get => _model.Text;
-        set => SetProperty(_model.Text, value,
-                           v => _model = _model with { Text = v });
+        set { _model.Text = value; OnPropertyChanged(nameof(Text)); }
     }
 
     public string? ImagePath
     {
         get => _model.ImagePath;
-        set => SetProperty(_model.ImagePath, value,
-                           v => _model = _model with { ImagePath = v });
+        set { _model.ImagePath = value; OnPropertyChanged(nameof(ImagePath)); }
     }
 
-public ObservableCollection<NodeVM> Children { get; }
+    public ObservableCollection<NodeVM> Children { get; }  // 로직·이동·선 연결용
     public bool IsSelected => _sel.Current == _model || _sel.Multi.Contains(_model);
     public NodeModel Model => _model;
 }

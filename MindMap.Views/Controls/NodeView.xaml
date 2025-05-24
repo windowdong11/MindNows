@@ -31,20 +31,20 @@
         </Border>
 
         <!-- ───── 자식 노드 렌더 ───── -->
-        <ItemsControl ItemsSource="{Binding Children}">
+        <!--<ItemsControl ItemsSource="{Binding Children}">
             <ItemsControl.ItemTemplate>
-                <!-- NodeVM → 다시 NodeView (재귀) -->
+                --><!-- NodeVM → 다시 NodeView (재귀) --><!--
                 <DataTemplate DataType="{x:Type vm:NodeVM}">
                     <local:NodeView/>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
 
-            <!-- 간단한 들여쓰기용 -->
+            --><!-- 간단한 들여쓰기용 --><!--
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Margin="24,0,0,0"/>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-        </ItemsControl>
+        </ItemsControl>-->
     </StackPanel>
 </UserControl>

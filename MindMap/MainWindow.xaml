@@ -30,16 +30,29 @@
     </Window.InputBindings>
     <ScrollViewer HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto">
-		 <!--임시: StackPanel로 수직 배치--> 
-		<ItemsControl ItemsSource="{Binding Roots}">
-			<ItemsControl.ItemTemplate>
-				<DataTemplate DataType="{x:Type vm:NodeVM}">
-					<local:NodeView/>
-					 <!--NodeView UserControl--> 
-				</DataTemplate>
-			</ItemsControl.ItemTemplate>
-		</ItemsControl>
-	</ScrollViewer>
+        <ItemsControl ItemsSource="{Binding AllNodes}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                    <!-- 단일 Canvas -->
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <!-- 각 노드의 Canvas 좌표 바인딩 -->
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left" Value="{Binding Model.Position.X}"/>
+                    <Setter Property="Canvas.Top"  Value="{Binding Model.Position.Y}"/>
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:NodeVM}">
+                    <local:NodeView/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
     <!--<ScrollViewer>
         <Canvas x:Name="MindCanvas">
             <ItemsControl ItemsSource="{Binding Roots}">
