@@ -116,11 +116,25 @@ public partial class DocumentVM : ObservableObject
                 // 부모가 없는 경우(루트 노드 등) 이동 불가
                 return;
             }
-            // Ctrl+← (Left) → 루프를 '아래부터',  Ctrl+→ (Right) → '위부터'
+
+            // Ctrl+← (Left) 루프를 '아래부터',  Ctrl+→ (Right) '위부터'
             var ordered = move == ReparentAction.Left
                         ? selection.OrderByDescending(n => parent.Children.IndexOf(n))
                         : selection.OrderBy(n => parent.Children.IndexOf(n));
 
+            var grandParent = _sel.GetParent(parent);
+            if (grandParent is null)
+            {
+                if ((move == ReparentAction.Left && selection[0].Side == SideEnum.Right)
+                || (move == ReparentAction.Right && selection[0].Side == SideEnum.Left))
+                {
+                    ordered = selection.OrderBy(n => parent.Children.IndexOf(n));
+                    foreach (var n in ordered)
+                        _mut.MoveRootChildSide(n);
+                    BuildEdgesAndLayout();
+                    return;
+                }
+            }
             bool changed = false;
             foreach (var n in ordered)
                 changed |= _mut.Reparent(n, move);

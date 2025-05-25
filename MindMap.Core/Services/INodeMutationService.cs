@@ -15,4 +15,5 @@ public interface INodeMutationService
     /// <returns>true = 변화 발생</returns>
     bool MoveWithinSiblings(NodeModel node, int delta);
     bool Reparent(NodeModel node, ReparentAction dir);
+    void MoveRootChildSide(NodeModel node);
 }

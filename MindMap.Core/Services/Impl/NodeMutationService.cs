@@ -18,15 +18,76 @@ public sealed class NodeMutationService : INodeMutationService
         var parent = _sel.GetParent(node);
         if (parent is null) return false;                     // 루트는 패스
 
-        var list = parent.Children;
-        var idx = list.IndexOf(node);
-        var tgt = idx + delta;
-        if (tgt < 0 || tgt >= list.Count) return false;
+        // 같은 방향을 가진 앞쪽 형제들 중 마지막 노드 찾기
+        if (delta == -1)
+            return SwapWithPrevSibling(node, parent); // 위로 이동은 앞 형제와 swap
+        else if (delta == 1)
+            return SwapWithNextSibling(node, parent); // 아래로 이동은 뒤 형제와 swap
+        return false;
+    }
 
-        // 이동
-        list.RemoveAt(idx);
-        list.Insert(tgt, node);
+    private bool SwapWithPrevSibling(NodeModel node, NodeModel parent)
+    {
+        var siblings = parent.Children;
+        int idx = siblings.IndexOf(node);
+        if (idx <= 0) return false; // 첫 번째면 swap 불가
+        int prevIdx = -1;
+        for (int i = idx - 1; i >= 0; i--)
+        {
+            if (siblings[i].Side == node.Side)
+            {
+                prevIdx = i;
+                break;
+            }
+        }
+        if (prevIdx == -1) return false; // 같은 방향의 앞 형제 없음
+                                         // swap
+        siblings.Move(idx, prevIdx);
         return true;
+    }
+
+    private bool SwapWithNextSibling(NodeModel node, NodeModel parent)
+    {
+        var siblings = parent.Children;
+        int idx = siblings.IndexOf(node);
+        if (idx >= siblings.Count - 1) return false; // 마지막이면 swap 불가
+        int nextIdx = -1;
+        for (int i = idx + 1; i < siblings.Count; i++)
+        {
+            if (siblings[i].Side == node.Side)
+            {
+                nextIdx = i;
+                break;
+            }
+        }
+        if (nextIdx == -1) return false; // 같은 방향의 뒤 형제 없음
+                                         // swap
+        siblings.Move(idx, nextIdx);
+        return true;
+    }
+
+
+    public void MoveRootChildSide(NodeModel node)
+    {
+        if (node is null) return;  // 루트가 아니면 패스
+        var parent = _sel.GetParent(node);
+        if (parent is null) return;  // 루트가 아니면 패스
+        var grand = _sel.GetParent(parent);
+        if (grand is not null) return;    // 루트가 아니면 패스
+
+        // 마지막 노드로 이동
+        var siblings = parent.Children;
+        siblings.Remove(node);           // 현재 위치에서 제거
+        var destSide = node.Side == SideEnum.Right ? SideEnum.Left : SideEnum.Right;
+        siblings.Add(node);             // 마지막에 추가 (Side 변경은 필요 없음)
+        SetSide(node, destSide);         // Side 변경
+    }
+
+    private void SetSide(NodeModel n, SideEnum side)
+    {
+        n.Side = side;
+        foreach (var child in n.Children)
+            SetSide(child, side);       // 자식도 동일하게 설정
     }
 
     public bool Reparent(NodeModel node, ReparentAction dir)
@@ -77,29 +138,35 @@ public sealed class NodeMutationService : INodeMutationService
         var destSide = node.Side == SideEnum.Right ? SideEnum.Left : SideEnum.Right;
         var siblings = root.Children;
 
-        int destIndex = siblings
-            .Select((n, i) => (n, i))
-            .Where(t => t.n.Side == destSide)
-            .Select(t => t.i)
-            .DefaultIfEmpty(-1)
-            .Max() + 1;                      // 그룹 마지막 뒤
+        //int destIndex = siblings
+        //    .Select((n, i) => (n, i))
+        //    .Where(t => t.n.Side == destSide)
+        //    .Select(t => t.i)
+        //    .DefaultIfEmpty(-1)
+        //    .Max() + 1;                      // 그룹 마지막 뒤
 
-        if (destIndex < 0) return false;
+        //if (destIndex < 0) return false;
 
         siblings.Remove(node);
-        siblings.Insert(destIndex, node);
-        node.Side = destSide;                // 방향 전환
+        siblings.Add(node);
+
+        
+        SetSide(node, destSide);          // Side 변경
         return true;
     }
 
-    // ───── Helper : 강등 (앞 형제의 마지막 자식) ─────
+    // ───── Helper : 강등 (방향이 같은 앞 형제의 마지막 자식) ─────
     private bool DemoteToPrevSibling(NodeModel node, NodeModel parent)
     {
         var siblings = parent.Children;
         int idx = siblings.IndexOf(node);
         if (idx <= 0) return false;          // 앞 형제 없음
 
-        var prev = siblings[idx - 1];
+        // 같은 방향의 앞 형제 찾기
+        var prev = siblings
+            .Take(idx)
+            .LastOrDefault(n => n.Side == node.Side && !_sel.Multi.Contains(n));
+        if (prev is null) return false;       // 같은 방향의 앞 형제 없음
 
         siblings.RemoveAt(idx);
         prev.Children.Add(node);

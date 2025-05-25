@@ -59,7 +59,8 @@ public sealed class SelectionService : ISelectionService
         if (dir is Direction.Up or Direction.Down)
         {
             if (parent is null) return;                       // 루트는 형/동생 없음
-            var list = parent.Children;
+            // 같은 방향의 형제에서 이동
+            var list = parent.Children.Where(c => c.Side == Current.Side).ToList();
             var idx = list.IndexOf(Current);
             var next = dir == Direction.Up ? idx - 1
                      : dir == Direction.Down ? idx + 1 : -1;
@@ -70,16 +71,37 @@ public sealed class SelectionService : ISelectionService
         }
         else // Left/Right
         {
-            if (dir == Direction.Left && parent is not null)
+            // 왼쪽에 위치한 노드를 선택한 경우, 방향 반전
+            if (Current.Side == SideEnum.Left)
             {
-                Select(parent);                               // 부모
+                dir = dir switch
+                {
+                    Direction.Left => Direction.Right,
+                    Direction.Right => Direction.Left,
+                    _ => dir
+                };
+            }
+            if (dir == Direction.Left)
+            {
+                if (parent is null)
+                {
+                    // 루트는 왼쪽 첫 자식 선택
+                    if (Current.Children.Any(c => c.Side == SideEnum.Left))
+                        Select(Current.Children.First(c => c.Side == SideEnum.Left));
+                }
+                else
+                    Select(parent);                               // 부모
             }
             else if (dir == Direction.Right)
             {
-                if (Current.Children.Any())
+                if (parent is null)
+                {
+                    // 루트는 오른쪽 첫 자식 선택
+                    if (Current.Children.Any(c => c.Side == SideEnum.Right))
+                        Select(Current.Children.First(c => c.Side == SideEnum.Right));
+                }
+                else if (Current.Children.Any())
                     Select(Current.Children.First());             // 첫 자식
-                else
-                    Select(Current);
             }
         }
     }
