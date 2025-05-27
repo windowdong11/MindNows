@@ -14,8 +14,8 @@ public sealed class LayoutService : ILayoutService
     private const int VGap = 24;
 
     private readonly Dictionary<NodeModel, NodeLayout> _cache = new();
-    private NodeLayout rootLeftLayout;
-    private NodeLayout rootRightLayout;
+    private NodeLayout? rootLeftLayout;
+    private NodeLayout? rootRightLayout;
 
     public RectangleF GetNodeRect(NodeModel node)
     {
@@ -103,6 +103,8 @@ public sealed class LayoutService : ILayoutService
     /// <summary>재귀 Arrange – 이미 Measure 정보가 _cache 에 있음</summary>
     private void ArrangeInternal(NodeModel node, PointF origin)
     {
+        if (rootLeftLayout is null || rootRightLayout is null)
+            throw new InvalidOperationException("Root layouts must be initialized before arranging.");
         // 1) 자신의 레이아웃 정보
         //var info = _cache[node];
         var ownSize = new SizeF(120, 48);

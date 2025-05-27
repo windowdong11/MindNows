@@ -21,14 +21,22 @@ public class HitServiceTests
     }
 
     [Fact]
+    public void HidtNode_Returns_Null_When_No_Node_Hit()
+    {
+        var svc = new HitTestService();
+        svc.BuildIndex(Enumerable.Empty<NodeModel>());
+        svc.HitNode(new PointF(10, 10)).Should().BeNull();
+    }
+
+    [Fact]
     public void HitNode_Returns_Correct_Node()
     {
         var (r, a, b) = SampleTree();
         var svc = new HitTestService();
         svc.BuildIndex(new[] { r });
-
-        svc.HitNode(new(10, 80)).Should().Be(a);
-        svc.HitNode(new(10, 10)).Should().Be(r);
+        svc.HitNode(new PointF(10, 80)).Should().Be(a); // A 노드 위
+        svc.HitNode(new PointF(10, 10)).Should().Be(r); // 루트 노드 위
+        svc.HitNode(new PointF(10, 150)).Should().Be(b); // B 노드 위
     }
 
     [Fact]
