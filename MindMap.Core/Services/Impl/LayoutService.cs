@@ -17,6 +17,13 @@ public sealed class LayoutService : ILayoutService
     private NodeLayout rootLeftLayout;
     private NodeLayout rootRightLayout;
 
+    public RectangleF GetNodeRect(NodeModel node)
+    {
+        if (!_cache.TryGetValue(node, out var layout))
+            throw new KeyNotFoundException("Node not found in layout cache.");
+        return new RectangleF(node.Position.X, node.Position.Y, layout.SubtreeSize.Width, layout.SubtreeSize.Height);
+    }
+
     public void Arrange(NodeModel root)
     {
         _cache.Clear();

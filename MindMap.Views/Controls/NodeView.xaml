@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:MindMap.Views.Controls"
              xmlns:conv="clr-namespace:MindMap.Views.Converters"
              xmlns:vm="clr-namespace:MindMap.ViewModels;assembly=MindMap.ViewModels"
-             mc:Ignorable="d" 
+             mc:Ignorable="d"
              Width="Auto" Height="Auto">
     <UserControl.Resources>
         <conv:ImagePathToBitmapConverter x:Key="PathToBitmap"/>

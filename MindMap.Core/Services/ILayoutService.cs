@@ -14,4 +14,5 @@ public interface ILayoutService
     //SizeF MeasureAndArrange(NodeModel root);
     //IReadOnlyList<BezierEdge> Edges { get; }    // 계산 결과 노출
     void Arrange(NodeModel root);
+    RectangleF GetNodeRect(NodeModel node);
 }

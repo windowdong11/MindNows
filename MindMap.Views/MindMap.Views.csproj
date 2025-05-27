@@ -1,7 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MindMap.ViewModels\MindMap.ViewModels.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Adorners\" />
+    <Folder Include="Behaviors\" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
   <PropertyGroup>

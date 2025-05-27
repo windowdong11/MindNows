@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+//using MindMap.Core.Drag;
 using MindMap.ViewModels;
+//using MindMap.Views.Adorners;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;

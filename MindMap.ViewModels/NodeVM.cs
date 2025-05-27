@@ -67,4 +67,11 @@ public partial class NodeVM : ObservableObject
     public ObservableCollection<NodeVM> Children { get; }  // 로직·이동·선 연결용
     public bool IsSelected => _sel.Current == _model || _sel.Multi.Contains(_model);
     public NodeModel Model => _model;
+
+    public bool IsDragging
+    {
+        get => _isDragging;
+        set => SetProperty(ref _isDragging, value);
+    }
+    private bool _isDragging;
 }

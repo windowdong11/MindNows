@@ -9,6 +9,7 @@
         xmlns:conv="clr-namespace:MindMap.Views.Converters;assembly=MindMap.Views"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+        <!--xmlns:i="http://schemas.microsoft.com/xaml/behaviors"-->
     <Window.InputBindings>
         <!-- Phase 2 단일 방향키 … -->
         <KeyBinding Key="Up"   Modifiers="Ctrl"
