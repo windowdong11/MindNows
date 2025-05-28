@@ -28,7 +28,7 @@ public sealed class LayoutService : ILayoutService
     {
         _cache.Clear();
         Measure(root);
-        ArrangeInternal(root, new PointF(0, 0));
+        ArrangeInternal(root, root.Position);
     }
 
     /// <summary>재귀적으로 서브트리 크기 계산</summary>

@@ -13,8 +13,9 @@ public enum DragPhase { Idle, Dragging }
 
 public sealed record DragState(
     DragPhase Phase,
-    IReadOnlyCollection<NodeModel> Selection,   // 트리 루트들 (VM 아님)
+    NodeModel? Selection,   // 트리 루트들 (VM 아님)
     PointF DragStartWorld,                     // 마우스가 눌린 월드 좌표
     PointF CursorOffset,                      // 클릭 위치 ↔ 루트 선택 중심
+    PointF CurrentWorldPos,              // 현재 마우스 위치 (월드 좌표)
     NodeModel? HoverAttachTarget,              // 현재 Attach 후보
     (NodeModel parent, int index)? HoverGap);  // 형제 Gap 후보

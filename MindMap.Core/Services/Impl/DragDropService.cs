@@ -23,8 +23,8 @@ public sealed class DragDropService : IDragDropService
                            Action rebuildVisual)
     {
         _sel = sel; _hit = hit; _mut = mut; _rebuildVisual = rebuildVisual;
-        _state = new DragState(DragPhase.Idle, Array.Empty<NodeModel>(),
-                               default, default, null, null);
+        _state = new DragState(DragPhase.Idle, null,
+                               default, default, default, null, null);
     }
 
     private DragState _state;
@@ -42,12 +42,12 @@ public sealed class DragDropService : IDragDropService
         //var minX = sel.Min(n => n.Position.X);
         //var minY = sel.Min(n => n.Position.Y);
         _sel.Select(root);  // 현재 선택 노드로 설정
-        var sel = new[] { root };
+        //var sel = new[] { root };
         var minX = root.Position.X;
         var minY = root.Position.Y;
         _state = new DragState(
-            DragPhase.Dragging, sel,
-            pos, new PointF(pos.X - minX, pos.Y - minY),
+            DragPhase.Dragging, root,
+            pos, new PointF(minX - pos.X, minY - pos.Y), pos,
             null, null);
         Raise();
     }
@@ -57,34 +57,46 @@ public sealed class DragDropService : IDragDropService
         if (_state.Phase != DragPhase.Dragging) return;
 
         // Hover 상태 갱신
-        var selRoot = _state.Selection.First();
+        var selRoot = _state.Selection;
+        if (selRoot is null)
+            throw new InvalidOperationException("Selection is null during drag."); // null일 수 없음. BeginDrag에서 설정됨
         var gap = _hit.HitSiblingGap(selRoot, pos);
         var attach = _hit.HitAttachTarget(selRoot, pos);
 
-        _state = _state with { HoverGap = gap, HoverAttachTarget = attach };
+        _state = _state with { HoverGap = gap, HoverAttachTarget = attach, CurrentWorldPos = pos };
         Raise();
     }
 
     public void CommitDrag(PointF pos)
     {
         if (_state.Phase != DragPhase.Dragging) return;
+        var selRoot = _state.Selection;
+        if (selRoot is null)
+            throw new InvalidOperationException("Selection is null during drag."); // null일 수 없음. BeginDrag에서 설정됨
+        var sibgap = _hit.HitSiblingGap(selRoot, pos);
+        var attach = _hit.HitAttachTarget(selRoot, pos);
 
-        var selRoots = _state.Selection;
+        _state = _state with { HoverGap = sibgap, HoverAttachTarget = attach };
+
         bool changed = false;
 
-        if (_state.HoverGap is { } gap)
+        if (_state.HoverAttachTarget is { } tgt)
+        {
+            //var dir = tgt.Side == SideEnum.Right
+            //    ? ReparentAction.Right : ReparentAction.Left;
+            //foreach (var n in selRoots)
+            if (selRoot != tgt)
+                changed |= _mut.Reparent(selRoot, tgt);
+        }
+        else if (_state.HoverGap is { } gap)
         {
             // 형제 순서 이동
-            foreach (var n in selRoots.Reverse())      // 아래→위 충돌방지
-                changed |= _mut.MoveWithinSiblings(n, gap.index - // insertIndex인데 수정했음
-                       gap.parent.Children.IndexOf(n));
-        }
-        else if (_state.HoverAttachTarget is { } tgt)
-        {
-            var dir = tgt.Side == SideEnum.Right
-                ? ReparentAction.Right : ReparentAction.Left;
-            foreach (var n in selRoots)
-                changed |= _mut.Reparent(n, dir);
+            var nodeIndex = gap.parent.Children.IndexOf(selRoot);
+            var delta = gap.index > nodeIndex
+                ? gap.index - nodeIndex - 1
+                : gap.index - nodeIndex;
+            if (delta != 0)
+                changed |= _mut.MoveWithinSiblings(selRoot, delta);
         }
         // else 영역 밖 → 위치 변화 없음
 

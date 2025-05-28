@@ -46,17 +46,19 @@
     <Window.Resources>
         <conv:EdgeInfoToGeometryConverter x:Key="Edge2Geo"/>
     </Window.Resources>
-    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+    <ScrollViewer x:Name="WorldScrollViewer"
+        HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto">
-        <Grid x:Name="World"
+        <Canvas x:Name="World"
+                Background="Transparent"
           ClipToBounds="False">
-            <Grid.RenderTransform>
+            <Canvas.RenderTransform>
                 <!-- 팬/줌 서비스가 앞으로 바인딩할 Transform -->
                 <TransformGroup>
-                    <ScaleTransform x:Name="ZoomTransform" ScaleX="0.6" ScaleY="0.6"/>
-                    <TranslateTransform x:Name="PanTransform" X="300" Y="200"/>
+                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1"/>
+                    <TranslateTransform x:Name="PanTransform" X="0" Y="0"/>
                 </TransformGroup>
-            </Grid.RenderTransform>
+            </Canvas.RenderTransform>
 
             <!-- ② Edge 레이어 (z-index 0) -->
             <ItemsControl ItemsSource="{Binding Edges}"
@@ -103,7 +105,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-        </Grid>
+        </Canvas>
     </ScrollViewer>
     <!--<ScrollViewer>
         <Canvas x:Name="MindCanvas">

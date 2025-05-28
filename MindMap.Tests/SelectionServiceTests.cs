@@ -82,7 +82,7 @@ public class SelectionServiceTests
             sel.RegisterParent(a, p);
 
             var mut = new NodeMutationService(sel);
-            mut.Reparent(a, ReparentAction.Left).Should().BeTrue();
+            mut.SetSide(a, SideEnum.Left).Should().BeTrue();
 
             root.Children[1].Should().Be(a);                        // after parent
             sel.GetParent(a).Should().Be(root);
@@ -104,7 +104,7 @@ public class SelectionServiceTests
             sel.RegisterParent(prev, p); sel.RegisterParent(a, p);
 
             var mut = new NodeMutationService(sel);
-            mut.Reparent(a, ReparentAction.Right).Should().BeTrue();
+            mut.Reparent(a, prev).Should().BeTrue();
 
             prev.Children.Last().Should().Be(a);
             sel.GetParent(a).Should().Be(prev);

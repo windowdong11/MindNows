@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows;
 using Point = System.Windows.Point;
+using System.Diagnostics;
 
 namespace MindMap.Views;
 
@@ -38,14 +39,23 @@ public sealed class DragDropController
     }
 
     void OnDown(object? s, MouseButtonEventArgs e)
-    { _svc.BeginDrag(ToWorld(e.GetPosition(_world))); }
+    {
+        Debug.WriteLine("Down");
+        _svc.BeginDrag(ToWorld(e.GetPosition(_world)));
+    }
 
     void OnMove(object? s, MouseEventArgs e)
     {
-        if (e.LeftButton == MouseButtonState.Pressed)
+        if (e.LeftButton == MouseButtonState.Pressed && _svc.State.Phase == Core.Services.DragDrop.DragPhase.Dragging)
+        {
+            Debug.WriteLine("Move");
             _svc.UpdateDrag(ToWorld(e.GetPosition(_world)));
+        }
     }
 
     void OnUp(object? s, MouseButtonEventArgs e)
-    { _svc.CommitDrag(ToWorld(e.GetPosition(_world))); }
+    {
+        Debug.WriteLine("Up");
+        _svc.CommitDrag(ToWorld(e.GetPosition(_world)));
+    }
 }

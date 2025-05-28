@@ -33,14 +33,15 @@ public sealed class HitTestService : IHitTestService
         NodeModel dragging, PointF pos)
     {
         if (!_parent.TryGetValue(dragging, out var parent) || parent is null)
-            throw new InvalidOperationException("HitSiblingGap: No parent found for the dragging between sibling node.");
+            return null;
+            //throw new InvalidOperationException("HitSiblingGap: No parent found for the dragging between sibling node.");
 
         var siblings = parent.Children;
 
-        var topY = _bounds[siblings[0]].Top - GapHalf;
+        var topY = _bounds[siblings[0]].Bottom - GapHalf;
         if (pos.Y <= topY)
             return (parent, 0);  // 첫 번째 형제 위에 위치
-        var bottomY = _bounds[siblings[^1]].Bottom + GapHalf;
+        var bottomY = _bounds[siblings[^1]].Bottom;
         if (pos.Y >= bottomY)
             return (parent, siblings.Count);  // 마지막 형제 아래에 위치
 
@@ -48,24 +49,24 @@ public sealed class HitTestService : IHitTestService
         for (int i = 0; i <= siblings.Count; i++)
         {
             var upperY = i == 0
-                ? _bounds[siblings[0]].Top - GapHalf
-                : _bounds[siblings[i - 1]].Bottom + GapHalf;
+                ? _bounds[siblings[0]].Bottom - GapHalf
+                : _bounds[siblings[i - 1]].Bottom;
 
             var lowerY = i == siblings.Count
-                ? _bounds[siblings[^1]].Bottom + GapHalf
-                : _bounds[siblings[i]].Top - GapHalf;
+                ? _bounds[siblings[^1]].Bottom
+                : _bounds[siblings[i]].Bottom - GapHalf;
 
-            var left = siblings[0].Side == SideEnum.Left
-                       ? _bounds[siblings[0]].Right - NodeW   // 정렬 보조
-                       : _bounds[siblings[0]].Left;
+            //var left = siblings[0].Side == SideEnum.Left
+            //           ? _bounds[siblings[0]].Right - NodeW   // 정렬 보조
+            //           : _bounds[siblings[0]].Left;
 
-            var gapRect = new RectangleF(left, upperY,
-                NodeW, lowerY - upperY);
+            //var gapRect = new RectangleF(left, upperY,
+            //    NodeW, lowerY - upperY);
+            if (upperY <= pos.Y && pos.Y <= lowerY) return (parent, i);
 
-            if (gapRect.Contains(pos)) return (parent, i);
+            //if (gapRect.Contains(pos)) return (parent, i);
         }
-        // 절대 여기 오지 않음
-        throw new InvalidOperationException("HitSiblingGap: No valid gap found.");
+        return null;
     }
 
     public NodeModel? HitAttachTarget(NodeModel dragging, PointF pos)
@@ -74,8 +75,8 @@ public sealed class HitTestService : IHitTestService
         if (hit is null) return null;
 
         // 자기 자신·하위 트리면 attach 불가
-        for (var n = _parent[dragging]; n != null; n = _parent[n])
-            if (n == hit) return null;
+        for (var n = _parent[hit]; n != null; n = _parent[n])
+            if (n == dragging) return null;
 
         return hit;
     }

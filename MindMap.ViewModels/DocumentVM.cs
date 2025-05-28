@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace MindMap.ViewModels;
 
@@ -24,7 +25,7 @@ public partial class DocumentVM : ObservableObject
     public ObservableCollection<EdgeVM> Edges { get; } = new();
 
     // 의존 서비스(나중 단계에서 주입)
-    public DocumentVM(ISelectionService selSvc, ILayoutService laySvc, INodeMutationService mutSvc /* DI 주입 */ )
+    public DocumentVM(ISelectionService selSvc, ILayoutService laySvc, INodeMutationService mutSvc, IHitTestService hitSvc /* DI 주입 */ )
     {
         // ───── 샘플 트리 ─────
         var root = new NodeModel(Guid.NewGuid(), "Root");
@@ -36,24 +37,22 @@ public partial class DocumentVM : ObservableObject
         root.Children.Add(childA);
         root.Children.Add(new NodeModel(Guid.NewGuid(), "Child B"));
         root.Children.Add(new NodeModel(Guid.NewGuid(), "Child D"));
+        var secondRoot = new NodeModel(Guid.NewGuid(), "sec Root")
+        {
+            Position = new System.Drawing.Point(300, 200)
+        };
 
 
         // 초기화
         _sel = selSvc;
         _lay = laySvc;
         _mut = mutSvc;
-        Roots = new ObservableCollection<NodeVM> { new(root, selSvc) };
+        _hit = hitSvc;
+        Roots = new ObservableCollection<NodeVM> { new(root, selSvc), new(secondRoot, selSvc) };
         BuildParentMap(root, null); // 주행성 보조
 
         // 플랫 컬렉션 초기화
         AllNodes = new ObservableCollection<NodeVM>();
-        Flatten(Roots.First());
-
-        void Flatten(NodeVM vm)
-        {
-            AllNodes.Add(vm);
-            foreach (var c in vm.Children) Flatten(c);
-        }
 
         // 루트 선택 기본값
         _sel.Select(Roots.First().Model);
@@ -117,27 +116,85 @@ public partial class DocumentVM : ObservableObject
                 return;
             }
 
-            // Ctrl+← (Left) 루프를 '아래부터',  Ctrl+→ (Right) '위부터'
-            var ordered = move == ReparentAction.Left
-                        ? selection.OrderByDescending(n => parent.Children.IndexOf(n))
-                        : selection.OrderBy(n => parent.Children.IndexOf(n));
-
             var grandParent = _sel.GetParent(parent);
-            if (grandParent is null)
+            var nodeSide = selection[0].Side;
+
+            bool ConnectToElderSibling()
             {
-                if ((move == ReparentAction.Left && selection[0].Side == SideEnum.Right)
-                || (move == ReparentAction.Right && selection[0].Side == SideEnum.Left))
+                var ordered = selection.OrderBy(n => parent.Children.IndexOf(n));
+                var idx = parent.Children.IndexOf(ordered.First());
+                var elderSibling = idx > 0 ? parent.Children[idx - 1] : null;
+                if (elderSibling is null) return false; // 형제가 없는 경우 이동 불가
+                var changed = false;
+                foreach (var n in ordered)
                 {
-                    ordered = selection.OrderBy(n => parent.Children.IndexOf(n));
-                    foreach (var n in ordered)
-                        _mut.MoveRootChildSide(n);
-                    BuildEdgesAndLayout();
-                    return;
+                    // 형제 노드로 이동
+                    changed = _mut.Reparent(n, elderSibling);
+                }
+                return changed;
+            }
+            bool ConnectToGrandParent()
+            {
+                var ordered = selection.OrderBy(n => parent.Children.IndexOf(n));
+                // 부모의 자식으로 이동
+                var insertIdx = grandParent.Children.IndexOf(parent) + 1;
+                var lastIdx = grandParent.Children.Count;
+                var delta = insertIdx - lastIdx;
+                var changed = false;
+                foreach (var n in ordered)
+                {
+                    changed |= _mut.Reparent(n, grandParent);
+                    _mut.MoveWithinSiblings(n, delta);
+                }
+                return changed;
+            }
+            bool MoveRootChildrenToSide(SideEnum side)
+            {
+                var ordered = selection.OrderBy(n => parent.Children.IndexOf(n));
+                var changed = false;
+                foreach (var n in ordered)
+                {
+                    changed |= _mut.Reparent(n, parent); // 부모의 자식으로 이동
+                    changed |= _mut.SetSide(n, side);
+                }
+                return changed;
+            }
+
+            bool changed = false;
+            if (move == ReparentAction.Left)
+            {
+                if (nodeSide == SideEnum.Right)
+                {
+                    if (grandParent is null)
+                        changed = MoveRootChildrenToSide(SideEnum.Left); // 루트 노드의 자식으로 이동
+                    else 
+                        changed = ConnectToGrandParent();
+                }
+                else if (nodeSide == SideEnum.Left)
+                {
+                    changed = ConnectToElderSibling();
+                }
+                else
+                {
+                    throw new InvalidOperationException("Invalid node side for left reparenting.");
                 }
             }
-            bool changed = false;
-            foreach (var n in ordered)
-                changed |= _mut.Reparent(n, move);
+            else
+            {
+                if (nodeSide == SideEnum.Right)
+                    changed = ConnectToElderSibling();
+                else if (nodeSide == SideEnum.Left)
+                {
+                   if (grandParent is null)
+                        changed = MoveRootChildrenToSide(SideEnum.Right); // 루트 노드의 자식으로 이동
+                    else
+                        changed = ConnectToGrandParent();
+                }
+                else
+                {
+                    throw new InvalidOperationException("Invalid node side for right reparenting.");
+                }
+            }
 
             if (changed) BuildEdgesAndLayout();
         });
@@ -156,15 +213,20 @@ public partial class DocumentVM : ObservableObject
     }
 
 
-    void BuildEdgesAndLayout()
+    public void BuildEdgesAndLayout()
     {
         Edges.Clear();
-        FlattenAndEdges(Roots.First());
+        AllNodes.Clear();
+        foreach (var root in Roots)
+        {
+            FlattenAndEdges(root);
 
-        // 1) 레이아웃
-        _lay.Arrange(Roots.First().Model);
-        // 2) Edge Path 계산 갱신
-        foreach (var e in Edges) e.Refresh();
+            // 1) 레이아웃
+            _lay.Arrange(root.Model);
+            // 2) Edge Path 계산 갱신
+            foreach (var e in Edges) e.Refresh();
+        }
+        _hit.BuildIndex(Roots.Select(r => r.Model));
     }
 
     void FlattenAndEdges(NodeVM vm)
@@ -184,4 +246,5 @@ public partial class DocumentVM : ObservableObject
     private readonly ISelectionService _sel;
     private readonly ILayoutService _lay;
     private readonly INodeMutationService _mut;
+    private readonly IHitTestService _hit;
 }

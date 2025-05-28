@@ -27,6 +27,24 @@ public static class Bootstrap
         sc.AddSingleton<ILayoutService, LayoutService>();
         sc.AddSingleton<ISelectionService, SelectionService>();
         sc.AddSingleton<INodeMutationService, NodeMutationService>();
+        sc.AddSingleton<IHitTestService, HitTestService>();
+        sc.AddSingleton<IDragDropService>(provider =>
+        {
+            var sel = provider.GetRequiredService<ISelectionService>();
+            var hit = provider.GetRequiredService<IHitTestService>();
+            var mut = provider.GetRequiredService<INodeMutationService>();
+
+            // DocumentVM 생성 시 등록하는 방법도 가능 (아래 참고)
+            Action rebuildVisual = () =>
+            {
+                var doc = provider.GetRequiredService<DocumentVM>();
+                doc.BuildEdgesAndLayout();
+                hit.BuildIndex(doc.Roots.Select(n => n.Model));
+            };
+            var doc = provider.GetRequiredService<DocumentVM>();
+
+            return new DragDropService(sel, hit, mut, rebuildVisual);
+        });
 
         // ViewModels
         sc.AddSingleton<DocumentVM>();

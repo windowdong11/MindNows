@@ -19,11 +19,18 @@ public sealed class NodeMutationService : INodeMutationService
         if (parent is null) return false;                     // 루트는 패스
 
         // 같은 방향을 가진 앞쪽 형제들 중 마지막 노드 찾기
-        if (delta == -1)
-            return SwapWithPrevSibling(node, parent); // 위로 이동은 앞 형제와 swap
-        else if (delta == 1)
-            return SwapWithNextSibling(node, parent); // 아래로 이동은 뒤 형제와 swap
-        return false;
+        var result = false;
+        while (delta < 0)
+        {
+            result |= SwapWithPrevSibling(node, parent);
+            ++delta;
+        }
+        while (delta > 0)
+        {
+            result |= SwapWithNextSibling(node, parent);
+            --delta;
+        }
+        return result;
     }
 
     private bool SwapWithPrevSibling(NodeModel node, NodeModel parent)
@@ -83,30 +90,92 @@ public sealed class NodeMutationService : INodeMutationService
         SetSide(node, destSide);         // Side 변경
     }
 
-    private void SetSide(NodeModel n, SideEnum side)
+    public bool SetSide(NodeModel n, SideEnum side)
     {
+        if (n.Side == side) return false; // 변경 필요 없음
+        var result = false;
         n.Side = side;
         foreach (var child in n.Children)
-            SetSide(child, side);       // 자식도 동일하게 설정
+            result |= SetSide(child, side);       // 자식도 동일하게 설정
+        return result;
     }
 
-    public bool Reparent(NodeModel node, ReparentAction dir)
+    //public bool Reparent(NodeModel node, ReparentAction dir)
+    //{
+    //    var parent = _sel.GetParent(node);
+    //    if (parent is null) return false;              // 루트는 재부모 불가
+
+    //    bool isLeft = node.Side == SideEnum.Left;
+
+    //    // 명세-기준으로 '승진|강등' 판정
+    //    bool promote = (!isLeft && dir == ReparentAction.Left) ||
+    //                   (isLeft && dir == ReparentAction.Right);
+
+    //    bool demote = (!isLeft && dir == ReparentAction.Right) ||
+    //                   (isLeft && dir == ReparentAction.Left);
+
+    //    if (promote)
+    //    {
+    //        var grand = _sel.GetParent(parent);
+    //        if (grand is null)
+    //        {
+    //            var root = parent;
+    //            SetSide(node, node.Side == SideEnum.Left ? SideEnum.Right : SideEnum.Left);
+    //            root.Children.Move(root.Children.IndexOf(node), root.Children.Count - 1);
+    //            return true;
+    //        }
+    //        return ReparentTo(node, grand);
+    //        //return PromoteAfterParent(node, parent);
+    //    }
+    //    if (demote)
+    //    {
+    //        var siblings = parent.Children;
+    //        int idx = siblings.IndexOf(node);
+    //        if (idx <= 0) return false;          // 앞 형제 없음
+
+    //        // 같은 방향의 앞 형제 찾기
+    //        var prev = siblings
+    //            .Take(idx)
+    //            .LastOrDefault(n => n.Side == node.Side && !_sel.Multi.Contains(n));
+    //        if (prev is null)
+    //            return false;
+    //        return ReparentTo(node, prev);
+    //        //return DemoteToPrevSibling(node, parent);
+    //    }
+    //    return false;
+    //}
+
+    public bool Reparent(NodeModel node, NodeModel newParent)
     {
-        var parent = _sel.GetParent(node);
-        if (parent is null) return false;              // 루트는 재부모 불가
-
-        bool isLeft = node.Side == SideEnum.Left;
-
-        // 명세-기준으로 '승진|강등' 판정
-        bool promote = (!isLeft && dir == ReparentAction.Left) ||
-                       (isLeft && dir == ReparentAction.Right);
-
-        bool demote = (!isLeft && dir == ReparentAction.Right) ||
-                       (isLeft && dir == ReparentAction.Left);
-
-        if (promote) return PromoteAfterParent(node, parent);
-        if (demote) return DemoteToPrevSibling(node, parent);
-        return false;
+        if (node is null || newParent is null) return false;
+        // 현재 부모에서 제거
+        var currentParent = _sel.GetParent(node);
+        if (currentParent is null)
+        {
+            // 루트 노드인 경우
+            var root = node;
+            var destSide = newParent.Side;
+            // 자식 중 Side가 destSide와 다른 노드들은 순서를 마지막으로 바꿈.
+            for (var i = 0; i < root.Children.Count; i++)
+            {
+                var child = root.Children[i];
+                if (child.Side != destSide)
+                {
+                    SetSide(child, destSide); // Side 변경
+                    root.Children.Move(i, root.Children.Count - 1); // 마지막으로 이동
+                    i--; // 인덱스 조정
+                }
+            }
+        }
+        else
+        {
+            currentParent.Children.Remove(node);
+            SetSide(node, newParent.Side);
+        }
+        // 새 부모에 추가
+        newParent.Children.Add(node);
+        _sel.RegisterParent(node, newParent);
+        return true;
     }
 
     // ───── Helper : 승진 (부모 다음 형제로) ─────

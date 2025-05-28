@@ -14,6 +14,8 @@ public interface INodeMutationService
     /// <param name="delta">-1 = 위로, +1 = 아래로</param>
     /// <returns>true = 변화 발생</returns>
     bool MoveWithinSiblings(NodeModel node, int delta);
-    bool Reparent(NodeModel node, ReparentAction dir);
+    bool Reparent(NodeModel node, NodeModel newParent);
     void MoveRootChildSide(NodeModel node);
+
+    bool SetSide(NodeModel n, SideEnum side);
 }
