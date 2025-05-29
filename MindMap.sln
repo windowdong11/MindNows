@@ -13,6 +13,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MindMap.Views", "MindMap.Vi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MindMap.ViewModels", "MindMap.ViewModels\MindMap.ViewModels.csproj", "{C84675F2-709E-4F6D-B50B-312146305E58}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "솔루션 항목", "솔루션 항목", "{466A8BA4-A43F-4749-A298-E053080BCDD7}"
+	ProjectSection(SolutionItems) = preProject
+		ScrapCode.ps1 = ScrapCode.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
