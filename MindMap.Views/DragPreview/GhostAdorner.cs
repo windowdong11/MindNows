@@ -16,7 +16,7 @@ namespace MindMap.Views.DragPreview;
 
 public sealed class GhostAdorner : PreviewAdornerBase
 {
-    private static readonly Brush Fill = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0));
+    private static readonly System.Windows.Media.Brush Fill = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0));
 
     public GhostAdorner(Canvas adorned, IDragDropService svc)
         : base(adorned, svc) { }

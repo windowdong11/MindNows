@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows;
 using Size = System.Windows.Size;
 using Point = System.Windows.Point;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace MindMap.Views.DragPreview;
 

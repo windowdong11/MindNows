@@ -46,9 +46,13 @@
                     Command="{Binding AddChildCommand}"/>
         <KeyBinding Key="Tab"
                     Command="{Binding AddSiblingCommand}"/>
+        <KeyBinding Key="L" Modifiers="Ctrl"
+                    Command="{Binding EnterArrowModeCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="V" Command="{Binding PasteImageCommand}"/>
     </Window.InputBindings>
     <Window.Resources>
         <conv:EdgeInfoToGeometryConverter x:Key="Edge2Geo"/>
+        <conv:ArrowCurveToGeometryConverter x:Key="ArrowCurveToGeometryConverter"/>
         <!--<conv:RefEqualsToVisibilityConverter x:Key="RefEqualsToVisibility"/>-->
         <!--<conv:RefNotEqualsToVisibilityConverter x:Key="RefNotEqualsToVisibility"/>-->
     </Window.Resources>
@@ -94,9 +98,27 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- ③ Node 레이어 (z-index 1) -->
+            <ItemsControl ItemsSource="{Binding Arrows}" Panel.ZIndex="2">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:ArrowVM}">
+                        <Canvas>
+                            <!-- Arrow(베지어 곡선) -->
+                            <Path Stroke="DarkOrange"
+                                  StrokeThickness="2.5"
+                                  Data="{Binding Curve,  Converter={StaticResource ArrowCurveToGeometryConverter}}"/>
+                        </Canvas>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- ③ Node 레이어 (z-index 10) -->
             <ItemsControl ItemsSource="{Binding AllNodes}"
-                        Panel.ZIndex="1">
+                        Panel.ZIndex="10">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Canvas/>

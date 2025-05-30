@@ -6,6 +6,8 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using MindMap.Core.Layout;
+
 
 //using MindMap.Core.Drag;
 using MindMap.Core.Services;
@@ -24,6 +26,7 @@ public static class Bootstrap
         var sc = new ServiceCollection();
 
         // Singleton 서비스 등록
+        sc.AddSingleton<IClipboardService, ClipboardService>();
         sc.AddSingleton<IHitTestService, HitTestService>();
         sc.AddSingleton<ILayoutService, LayoutService>();
         sc.AddSingleton<ISelectionService, SelectionService>();
@@ -46,6 +49,7 @@ public static class Bootstrap
             return new DragDropService(sel, hit, mut, rebuildVisual);
         });
         sc.AddSingleton<IZoomPanService, ZoomPanService>();
+        // MindMap.Infrastructure\Bootstrap.cs (DI 등록 추가)
 
         // ViewModels
         sc.AddSingleton<DocumentVM>();

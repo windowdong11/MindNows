@@ -5,9 +5,11 @@ using MindMap.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using static System.Collections.Specialized.BitVector32;
 
 namespace MindMap.ViewModels;
@@ -23,6 +25,16 @@ public partial class DocumentVM : ObservableObject
     public ObservableCollection<NodeVM> Roots { get; }
     public ObservableCollection<NodeVM> AllNodes { get; }
     public ObservableCollection<EdgeVM> Edges { get; } = new();
+
+    public NodeVM? ArrowSourceNode { get; set; }
+    public ObservableCollection<ArrowVM> Arrows { get; } = new();
+
+    private ArrowVM? _selectedArrow;
+    public ArrowVM? SelectedArrow
+    {
+        get => _selectedArrow;
+        set => SetProperty(ref _selectedArrow, value);
+    }
 
     // editing node property, and IsEditing
     private NodeVM? _editingNode;
@@ -41,7 +53,7 @@ public partial class DocumentVM : ObservableObject
     }
 
     // 의존 서비스(나중 단계에서 주입)
-    public DocumentVM(ISelectionService selSvc, ILayoutService laySvc, INodeMutationService mutSvc, IHitTestService hitSvc /* DI 주입 */ )
+    public DocumentVM(ISelectionService selSvc, ILayoutService laySvc, INodeMutationService mutSvc, IHitTestService hitSvc, IClipboardService clipboardSvc)
     {
         // ───── 샘플 트리 ─────
         var root = new NodeModel(Guid.NewGuid(), "Root");
@@ -64,6 +76,7 @@ public partial class DocumentVM : ObservableObject
         _lay = laySvc;
         _mut = mutSvc;
         _hit = hitSvc;
+        _clipboard = clipboardSvc;
         Roots = new ObservableCollection<NodeVM> { new(root, selSvc), new(secondRoot, selSvc) };
         BuildParentMap(root, null); // 주행성 보조
 
@@ -79,6 +92,17 @@ public partial class DocumentVM : ObservableObject
         {
             if (EditingNode != null && _sel.Current != EditingNode.Model)
                 EditingNode = null;
+            if (ArrowSourceNode != null && _sel.Current != ArrowSourceNode.Model)
+            {
+                if (!Arrows.Any(a => a.From == ArrowSourceNode && a.To.Model == _sel.Current))
+                {
+                    var arrowDestNode = AllNodes.FirstOrDefault(n => n.Model == _sel.Current);
+                    if (arrowDestNode is null) throw new Exception("Arrow destination node not found in AllNodes.");
+                    AddArrow(ArrowSourceNode, arrowDestNode);
+                }
+
+                ArrowSourceNode = null; // 모드 해제
+            }
         };
 
         // Key 명령 래퍼
@@ -163,13 +187,13 @@ public partial class DocumentVM : ObservableObject
                 // 부모의 자식으로 이동
                 var changed = false;
                 var parentIdx = grandParent.Children.IndexOf(parent);
-                var delta = grandParent.Children
+                var delta = -grandParent.Children
                     .Skip(parentIdx + 1)
                     .Count(sibling => sibling.Side == nodeSide);
                 foreach (var n in ordered)
                 {
                     changed |= _mut.Reparent(n, grandParent);
-                    _mut.MoveWithinSiblings(parent, delta); // 부모 노드를 같은 방향으로 이동
+                    _mut.MoveWithinSiblings(n, delta);
                 }
                 // parentIdx부터 마지막까지 같은 방향에 있는 형제 노드의 수
                 return changed;
@@ -307,6 +331,10 @@ public partial class DocumentVM : ObservableObject
             foreach (var e in Edges) e.Refresh();
         }
         _hit.BuildIndex(Roots.Select(r => r.Model));
+        foreach (var arrow in Arrows)
+        {
+            //arrow.
+        }
     }
 
     void FlattenAndEdges(NodeVM vm)
@@ -319,6 +347,21 @@ public partial class DocumentVM : ObservableObject
         }
     }
 
+    public void AddArrow(NodeVM from, NodeVM to)
+    {
+        var model = new ArrowModel { From = from.Model, To = to.Model };
+        var arrowVM = new ArrowVM(from, to);
+        Arrows.Add(arrowVM);
+        SelectedArrow = arrowVM;
+    }
+    public void RemoveArrow(ArrowVM arrow)
+    {
+        Arrows.Remove(arrow);
+        if (SelectedArrow == arrow)
+            SelectedArrow = null;
+    }
+
+
     public IRelayCommand<Direction?> NavigateCommand { get; }
     public IRelayCommand<Direction?> ExpandSelectionCommand { get; }
     public IRelayCommand<Direction> MoveSiblingCommand { get; }
@@ -329,9 +372,55 @@ public partial class DocumentVM : ObservableObject
     // Add Node Commands
     public IRelayCommand AddChildCommand { get; }
     public IRelayCommand AddSiblingCommand { get; }
+    public IRelayCommand EnterArrowModeCommand => new RelayCommand(() =>
+    {
+        if (_sel.Current is null) return; // 선택된 노드가 없으면 리턴
+        // 화살표 모드 진입
+        ArrowSourceNode = AllNodes.FirstOrDefault(n => n.Model == _sel.Current);
+    }, () => !IsEditing && _sel.Current is not null);
+
+    public IRelayCommand PasteImageCommand => new RelayCommand(OnPasteImage, () => !IsEditing && _sel.Current is not null);
+
+    private void OnPasteImage()
+    {
+        var node = _sel.Current;
+        if (node == null) return;
+
+        if (!_clipboard.ContainsImage())
+        {
+            // 필요시 사용자에게 경고 메시지 노출 (View 쪽에서 Command CanExecute로 처리 가능)
+            return;
+        }
+
+        // 1. 이미지 추출
+        var img = _clipboard.GetImage();
+        if (img == null) return;
+
+        // 2. 임시 파일 저장 (예: AppData/Temp/mindmap_img_GUID.png)
+        string tempDir = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "MindMapTemp");
+        System.IO.Directory.CreateDirectory(tempDir);
+
+        string fileName = $"img_{Guid.NewGuid()}.png";
+        string fullPath = System.IO.Path.Combine(tempDir, fileName);
+
+        img.Save(fullPath, System.Drawing.Imaging.ImageFormat.Png);
+
+        // 3. NodeModel에 이미지 경로 저장
+        //node.ImagePath = fullPath;
+
+        // 4. 필요시: VM에 Notify (NodeVM이 Model.ImagePath를 중계)
+        var nodeVM = AllNodes.FirstOrDefault(n => n.Model == node);
+        if (nodeVM != null)
+        {
+            nodeVM.ImagePath = fullPath; // NotifyPropertyChanged 호출
+        }
+    }
 
     private readonly ISelectionService _sel;
     private readonly ILayoutService _lay;
     private readonly INodeMutationService _mut;
     private readonly IHitTestService _hit;
+    private readonly IClipboardService _clipboard;
 }
