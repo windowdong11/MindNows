@@ -10,19 +10,20 @@ using System.Windows.Input;
 using System.Windows;
 using Point = System.Windows.Point;
 using System.Diagnostics;
+using System.Windows.Documents;
 
 namespace MindMap.Views;
 
 public sealed class DragDropController
 {
     private readonly IDragDropService _svc;
-    private readonly ScrollViewer _scroll;   // 좌표 변환
+    //private readonly ScrollViewer _scroll;   // 좌표 변환
     private readonly Canvas _world;
 
     public DragDropController(IDragDropService svc,
-                              ScrollViewer scroll, Canvas world)
+                              Canvas world)
     {
-        _svc = svc; _scroll = scroll; _world = world;
+        _svc = svc; _world = world;
 
         // Input hookups
         _world.MouseLeftButtonDown += OnDown;
@@ -32,11 +33,13 @@ public sealed class DragDropController
         _world.KeyDown += (_, e) => { if (e.Key == Key.Escape) _svc.CancelDrag(); };
     }
 
-    PointF ToWorld(Point pScreen)
-    {
-        var point = _scroll.TranslatePoint(pScreen, _world);
-        return new PointF((float)point.X, (float)point.Y);
-    }
+    //PointF ToWorld(Point pScreen)
+    //{
+    //    var point = _scroll.TranslatePoint(pScreen, _world);
+    //    return new PointF((float)point.X, (float)point.Y);
+    //}
+
+    PointF ToWorld(Point screen) => new PointF((float)screen.X, (float)screen.Y);
 
     void OnDown(object? s, MouseButtonEventArgs e)
     {

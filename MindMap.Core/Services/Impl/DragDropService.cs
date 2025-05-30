@@ -80,7 +80,15 @@ public sealed class DragDropService : IDragDropService
 
         bool changed = false;
 
-        if (_state.HoverAttachTarget is { } tgt)
+        if (_hit.HitNode(pos) == null && _sel.GetParent(selRoot) == null)
+        {
+            // 빈 공간에 드랍: 루트 노드 이동
+            // -- 다음 단계에서 실제 구현 --
+            var actualPos = new Point((int)(pos.X + _state.CursorOffset.X), (int)(pos.Y + _state.CursorOffset.Y)); // 클릭 위치 ↔ 루트 선택 중심
+            selRoot.Position = actualPos;
+            changed = true;
+        }
+        else if (_state.HoverAttachTarget is { } tgt)
         {
             //var dir = tgt.Side == SideEnum.Right
             //    ? ReparentAction.Right : ReparentAction.Left;

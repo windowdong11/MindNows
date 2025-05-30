@@ -18,6 +18,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Drawing;
+using Point = System.Windows.Point;
+using System.Diagnostics;
 
 namespace MindMap
 {
@@ -26,14 +29,26 @@ namespace MindMap
     /// </summary>
     public partial class MainWindow : Window
     {
+        readonly private IZoomPanService _zoomSvc;
+        readonly private IHitTestService _hitSvc;
+        private bool _isPanning = false;
+        private Point _screenStartMouse;       // 스크린 좌표 기준 마우스 시작점
+        private PointF _panStartValue;         // 패닝 시작 시 Pan 값
+
         public MainWindow()
         {
             InitializeComponent();
 
             // DI로부터 DocumentVM 해와서 DataContext 지정
             if (Application.Current is App app)
+            {
                 DataContext = app.Services.GetRequiredService<DocumentVM>();
-            Loaded += Window_Loaded;
+                Loaded += Window_Loaded;
+                _zoomSvc = app.Services.GetRequiredService<IZoomPanService>();
+                _hitSvc = app.Services.GetRequiredService<IHitTestService>();
+                if (_zoomSvc == null || _hitSvc == null)
+                    throw new InvalidOperationException("ZoomPanService is not available.");
+            }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -46,14 +61,110 @@ namespace MindMap
                 layer.Add(new PlaceholderAdorner(World, svc));
                 layer.Add(new TooltipAdorner(World, svc));
 
-                // Drag controller 초기화
-                _ = new DragDropController(svc, WorldScrollViewer, World);
+                //Drag controller 초기화
+               _ = new DragDropController(svc, World);
                 var _hitService = app.Services.GetRequiredService<IHitTestService>();
                 var _vm = app.Services.GetRequiredService<DocumentVM>();
                 _vm.BuildEdgesAndLayout();
                 _hitService.BuildIndex(_vm.Roots.Select(n => n.Model));
+
+                _zoomSvc.Changed += (_, _) => UpdateTransform();
+                UpdateTransform();
+                // 마우스 휠 이벤트 연결
+                World.MouseWheel += OnWorldMouseWheel;
+                World.MouseLeftButtonDown += OnWorldMouseLeftButtonDown;
+                World.MouseMove += OnWorldMouseMove;
+                World.MouseLeftButtonUp += OnWorldMouseLeftButtonUp;
+                this.KeyDown += Window_KeyDown;
             }
         }
+
+        private void UpdateTransform()
+        {
+            if (_zoomSvc is null) return;
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = _zoomSvc.Zoom;
+            PanTransform.X = _zoomSvc.Pan.X;
+            PanTransform.Y = _zoomSvc.Pan.Y;
+        }
+
+        private void OnWorldMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (_zoomSvc is null) return;
+
+            // WPF에서 마우스 위치를 World(Canvas) 기준으로 변환
+            var p = e.GetPosition(null);
+            var mouseWorld = new System.Drawing.PointF((float)p.X, (float)p.Y);
+
+            // 보통 120당 1단계(10%)로 조정
+            float delta = e.Delta > 0 ? +0.1f : -0.1f;
+            _zoomSvc.ZoomAt(mouseWorld, delta);
+
+            e.Handled = true;
+        }
+
+        private void OnWorldMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var mousePos = e.GetPosition(null);
+            if (!IsOnBackground(TranslatePoint(mousePos, World))) return;
+            _isPanning = true;
+            _panStartValue = _zoomSvc?.Pan ?? new PointF(0, 0);
+            _screenStartMouse = mousePos;
+            World.CaptureMouse();
+        }
+
+        private void OnWorldMouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isPanning && e.LeftButton == MouseButtonState.Pressed)
+            {
+                var winPt = e.GetPosition(null);
+                var dx = winPt.X - _screenStartMouse.X;
+                var dy = winPt.Y - _screenStartMouse.Y;
+                var zoom = _zoomSvc?.Zoom ?? 1.0f;
+                var newPan = new PointF(
+                    _panStartValue.X + (float)(dx),
+                    _panStartValue.Y + (float)(dy)
+                );
+                if (_zoomSvc != null)
+                    _zoomSvc.Pan = newPan;
+            }
+        }
+
+        private void OnWorldMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isPanning)
+            {
+                _isPanning = false;
+                World.ReleaseMouseCapture();
+                if (_screenStartMouse == e.GetPosition(null))
+                {
+                    // 마우스가 움직이지 않았다면 배경 클릭으로 간주
+                    (DataContext as DocumentVM)?.ExitEditModeCommand.Execute(null);
+                }
+            }
+        }
+
+        // 노드/에지가 아닌 영역이면 true 반환
+        private bool IsOnBackground(Point p)
+        {
+            // HitTestService 활용해서 노드/에지 위가 아니면 true
+            var pt = new PointF((float)p.X, (float)p.Y);
+            return _hitSvc.HitNode(pt) == null;
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Space)
+            {
+                (DataContext as DocumentVM)?.EnterEditModeCommand.Execute(null);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                (DataContext as DocumentVM)?.ExitEditModeCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+
     }
 
 }

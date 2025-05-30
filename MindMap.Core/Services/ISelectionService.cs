@@ -13,6 +13,7 @@ public interface ISelectionService
 
     public event EventHandler? SelectionChanged;
 
+    // Use Select(null) to clear selection
     void Select(NodeModel? node);
     void ExpandRange(Direction dir);        // Shift+↑/↓
     void Navigate(Direction dir);           // 화살표

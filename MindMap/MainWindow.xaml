@@ -42,16 +42,26 @@
         <KeyBinding Key="Right" Modifiers="Ctrl"
             Command="{Binding ReparentCommand}"
             CommandParameter="{x:Static core:ReparentAction.Right}" />
+        <KeyBinding Key="Enter"
+                    Command="{Binding AddChildCommand}"/>
+        <KeyBinding Key="Tab"
+                    Command="{Binding AddSiblingCommand}"/>
     </Window.InputBindings>
     <Window.Resources>
         <conv:EdgeInfoToGeometryConverter x:Key="Edge2Geo"/>
+        <!--<conv:RefEqualsToVisibilityConverter x:Key="RefEqualsToVisibility"/>-->
+        <!--<conv:RefNotEqualsToVisibilityConverter x:Key="RefNotEqualsToVisibility"/>-->
     </Window.Resources>
-    <ScrollViewer x:Name="WorldScrollViewer"
+    <!--<ScrollViewer x:Name="WorldScrollViewer"
         HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto">
+    </ScrollViewer>-->
+    <Border Background="Black">
         <Canvas x:Name="World"
-                Background="Transparent"
-          ClipToBounds="False">
+                Background="#455A65"
+                Width="100000"
+                Height="100000"
+            ClipToBounds="False">
             <Canvas.RenderTransform>
                 <!-- 팬/줌 서비스가 앞으로 바인딩할 Transform -->
                 <TransformGroup>
@@ -62,7 +72,7 @@
 
             <!-- ② Edge 레이어 (z-index 0) -->
             <ItemsControl ItemsSource="{Binding Edges}"
-                      Panel.ZIndex="0">
+                        Panel.ZIndex="0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Canvas/>
@@ -78,15 +88,15 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:EdgeVM}">
                         <Path Stroke="#666" StrokeThickness="1.5"
-                          Data="{Binding Info,
-                                 Converter={StaticResource Edge2Geo}}"/>
+                            Data="{Binding Info,
+                                    Converter={StaticResource Edge2Geo}}"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
             <!-- ③ Node 레이어 (z-index 1) -->
             <ItemsControl ItemsSource="{Binding AllNodes}"
-                      Panel.ZIndex="1">
+                        Panel.ZIndex="1">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Canvas/>
@@ -106,7 +116,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Canvas>
-    </ScrollViewer>
+    </Border>
     <!--<ScrollViewer>
         <Canvas x:Name="MindCanvas">
             <ItemsControl ItemsSource="{Binding Roots}">

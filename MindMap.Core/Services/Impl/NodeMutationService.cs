@@ -170,7 +170,11 @@ public sealed class NodeMutationService : INodeMutationService
         else
         {
             currentParent.Children.Remove(node);
-            SetSide(node, newParent.Side);
+
+            if (_sel.GetParent(newParent) != null)
+            {
+                SetSide(node, newParent.Side);
+            }
         }
         // 새 부모에 추가
         newParent.Children.Add(node);

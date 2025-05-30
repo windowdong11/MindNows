@@ -7,11 +7,14 @@
              xmlns:conv="clr-namespace:MindMap.Views.Converters"
              xmlns:vm="clr-namespace:MindMap.ViewModels;assembly=MindMap.ViewModels"
              mc:Ignorable="d"
+             xmlns:behaviors="clr-namespace:MindMap.Views.Behaviors"
              Width="Auto" Height="Auto">
     <UserControl.Resources>
         <conv:ImagePathToBitmapConverter x:Key="PathToBitmap"/>
         <conv:BoolToBrushConverter      x:Key="BoolToBrush"
                                     TrueBrush="#000"/>
+        <conv:RefEqualsToVisibilityConverter x:Key="RefEqualsToVisibility"/>
+        <conv:RefNotEqualsToVisibilityConverter x:Key="RefNotEqualsToVisibility"/>
     </UserControl.Resources>
     <StackPanel>
         <!-- ───── 노드 본체 ───── -->
@@ -23,10 +26,32 @@
                 Converter={StaticResource PathToBitmap}}"
                    Width="120" Height="Auto"/>
 
-                <TextBlock Text="{Binding Text}"
+                <!--<TextBlock Text="{Binding Text}"
                        TextWrapping="Wrap"
                        FontSize="14"
-                       HorizontalAlignment="Center" />
+                       HorizontalAlignment="Center" />-->
+                <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True"
+                         IsVisibleChanged="EditBox_IsVisibleChanged">
+                    <!--TextWrapping="Wrap"-->
+                    <!--FocusManager.FocusedElement="{Binding RelativeSource={RelativeSource Self}}"-->
+                    <TextBox.Visibility>
+                        <MultiBinding Converter="{StaticResource RefEqualsToVisibility}">
+                            <!-- 편집 중인 노드 -->
+                            <Binding Path="DataContext.EditingNode" RelativeSource="{RelativeSource AncestorType=Window}" />
+                            <!-- 현재 노드 -->
+                            <Binding />
+                        </MultiBinding>
+                    </TextBox.Visibility>
+                </TextBox>
+                <TextBlock Text="{Binding Text}">
+                    <TextBlock.Visibility>
+                        <MultiBinding Converter="{StaticResource RefNotEqualsToVisibility}">
+                            <Binding Path="DataContext.EditingNode" RelativeSource="{RelativeSource AncestorType=Window}" />
+                            <Binding />
+                        </MultiBinding>
+                    </TextBlock.Visibility>
+                </TextBlock>
             </StackPanel>
         </Border>
 
