@@ -11,7 +11,6 @@ public sealed class HitTestService : IHitTestService
 {
     private readonly Dictionary<NodeModel, RectangleF> _bounds = new();
     private readonly Dictionary<NodeModel, NodeModel?> _parent = new();
-    private const float NodeW = 120f, NodeH = 48f;         // Phase 7 에서 동적 값으로 교체
     private const float GapHalf = 12f;                     // 위·아래 Gap 높이
 
     public void BuildIndex(IEnumerable<NodeModel> roots)
@@ -20,7 +19,7 @@ public sealed class HitTestService : IHitTestService
         foreach (var r in roots) DFS(r, null);
         void DFS(NodeModel n, NodeModel? p)
         {
-            _bounds[n] = new RectangleF(n.Position.X, n.Position.Y, NodeW, NodeH);
+            _bounds[n] = new RectangleF(n.Position.X, n.Position.Y, (float)n.NodeWidth, (float)n.NodeHeight);
             _parent[n] = p;
             foreach (var c in n.Children) DFS(c, n);
         }

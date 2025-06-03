@@ -7,9 +7,11 @@ public sealed class EdgeVM : ObservableObject
 {
     private readonly NodeVM _parent;
     private readonly NodeVM _child;
+    private static readonly float Hoffset = 3.0f;
 
-    // 임시 고정 값 (Phase 7에 NodeView ActualSize 로 치환)
-    private static readonly SizeF NodeSize = new(120, 48);
+    public NodeVM Parent => _parent;
+    public NodeVM Child => _child;
+
 
     public EdgeVM(NodeVM parent, NodeVM child)
     {
@@ -28,16 +30,20 @@ public sealed class EdgeVM : ObservableObject
     public void Refresh()
     {
         bool right = _child.Model.Side == SideEnum.Right;
-        var p = _parent.Model.Position;
+        var parentWidth = _parent.NodeWidth;
+        var parentHeight = _parent.NodeHeight;
+        var parentPos = _parent.Model.Position;
+        var childWidth = _child.NodeWidth;
+        var childHeight = _child.NodeHeight;
         var c = _child.Model.Position;
 
         var start = new PointF(
-            p.X + (right ? NodeSize.Width : 0),
-            p.Y + NodeSize.Height / 2);
+            parentPos.X + (right ? (float)parentWidth - Hoffset: Hoffset) ,
+            parentPos.Y + (float)parentHeight);
 
         var end = new PointF(
-            c.X + (right ? 0 : NodeSize.Width),
-            c.Y + NodeSize.Height / 2);
+            c.X + (right ? Hoffset : (float)childWidth - Hoffset),
+            c.Y + (float)childHeight);
 
         float dx = 30 * (right ? 1 : -1);
         var c1 = new PointF(start.X + dx, start.Y);

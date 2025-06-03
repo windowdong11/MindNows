@@ -8,6 +8,7 @@
         xmlns:core="clr-namespace:MindMap.Core.Services;assembly=MindMap.Core"
         xmlns:conv="clr-namespace:MindMap.Views.Converters;assembly=MindMap.Views"
         mc:Ignorable="d"
+        KeyDown="Window_KeyDown"
         Title="MainWindow" Height="450" Width="800">
         <!--xmlns:i="http://schemas.microsoft.com/xaml/behaviors"-->
     <Window.InputBindings>
@@ -49,6 +50,14 @@
         <KeyBinding Key="L" Modifiers="Ctrl"
                     Command="{Binding EnterArrowModeCommand}"/>
         <KeyBinding Modifiers="Ctrl" Key="V" Command="{Binding PasteImageCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding DetachToRootCommand}"/>
+        <KeyBinding Key="Space" Command="{Binding EnterEditModeCommand}"/>
+        <KeyBinding Key="Esc" Command="{Binding ExitEditModeCommand}"/>
+        <KeyBinding Key="Backspace" Command="{Binding DeleteNodeCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{Binding SaveAsCommand}"/>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenCommand}"/>
+        <!--<KeyBinding Modifiers="Shift" Key="Enter" Command="{Binding AddRootNodeAtCommand }"/>-->
     </Window.InputBindings>
     <Window.Resources>
         <conv:EdgeInfoToGeometryConverter x:Key="Edge2Geo"/>
@@ -91,7 +100,7 @@
                 </ItemsControl.ItemContainerStyle>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:EdgeVM}">
-                        <Path Stroke="#666" StrokeThickness="1.5"
+                        <Path Stroke="#aaa" StrokeThickness="3.5"
                             Data="{Binding Info,
                                     Converter={StaticResource Edge2Geo}}"/>
                     </DataTemplate>

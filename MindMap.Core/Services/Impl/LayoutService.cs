@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 public sealed class LayoutService : ILayoutService
 {
@@ -34,10 +35,8 @@ public sealed class LayoutService : ILayoutService
     /// <summary>재귀적으로 서브트리 크기 계산</summary>
     private SizeF Measure(NodeModel root)
     {
-        var textWidth = 120f; // 임시 노드 최소폭
-        var textHeight = 48f;  // 임시 노드 높이
 
-        var ownSize = new SizeF(textWidth, textHeight);
+        var ownSize = new SizeF((float)root.NodeWidth, (float)root.NodeHeight);
 
         // 자식 Measure
         var leftChildren = root.Children.Where(c => c.Side == SideEnum.Left).ToList();
@@ -76,8 +75,8 @@ public sealed class LayoutService : ILayoutService
 
     private SizeF MeasureSubTree(NodeModel node)
     {
-        var textWidth = 120f; // 임시 노드 최소폭
-        var textHeight = 48f;  // 임시 노드 높이
+        var textWidth = (float)node.NodeWidth; // 임시 노드 최소폭
+        var textHeight = (float)node.NodeHeight;  // 임시 노드 높이
 
         var ownSize = new SizeF(textWidth, textHeight);
 
@@ -96,8 +95,6 @@ public sealed class LayoutService : ILayoutService
         var subtree = new SizeF(totalWidth, totalHeight);
         _cache[node] = new NodeLayout(subtree, Point.Empty);
         return subtree;
-
-        
     }
 
     /// <summary>재귀 Arrange – 이미 Measure 정보가 _cache 에 있음</summary>
@@ -107,7 +104,7 @@ public sealed class LayoutService : ILayoutService
             throw new InvalidOperationException("Root layouts must be initialized before arranging.");
         // 1) 자신의 레이아웃 정보
         //var info = _cache[node];
-        var ownSize = new SizeF(120, 48);
+        var ownSize = new SizeF((float)node.NodeWidth, (float)node.NodeHeight);
 
         // 부모 중앙 y 계산용
         var leftChildren = node.Children.Where(c => c.Side == SideEnum.Left).ToList();
@@ -126,7 +123,7 @@ public sealed class LayoutService : ILayoutService
         
         foreach (var c in leftChildren)
         {
-            ArrangeSubTree(c, new PointF(leftOriginX - ownSize.Width, currentY));
+            ArrangeSubTree(c, new PointF(leftOriginX - (float)c.NodeWidth, currentY));
             currentY += _cache[c].SubtreeSize.Height + VGap;
         }
 
@@ -144,7 +141,7 @@ public sealed class LayoutService : ILayoutService
     {
         // 1) 자신의 레이아웃 정보
         var info = _cache[node];
-        var ownSize = new SizeF(120, 48);
+        var ownSize = new SizeF((float)node.NodeWidth, (float)node.NodeHeight);
 
         // 부모 중앙 y 계산용
         var children = node.Children;
@@ -170,7 +167,7 @@ public sealed class LayoutService : ILayoutService
         {
             foreach (var c in children)
             {
-                ArrangeSubTree(c, new PointF(originX - ownSize.Width, currentY));
+                ArrangeSubTree(c, new PointF(originX - (float)c.NodeWidth, currentY));
                 currentY += _cache[c].SubtreeSize.Height + VGap;
             }
         }

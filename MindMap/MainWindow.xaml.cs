@@ -150,21 +150,64 @@ namespace MindMap
             var pt = new PointF((float)p.X, (float)p.Y);
             return _hitSvc.HitNode(pt) == null;
         }
+        public System.Drawing.Point ViewToWorld(Point viewPoint)
+        {
+            // XAML에서 이름을 부여한 Transform을 직접 참조
+            double zoom = ZoomTransform.ScaleX;
+            double panX = PanTransform.X;
+            double panY = PanTransform.Y;
+
+            // 변환: (화면좌표 - 팬) / 줌 = 월드좌표
+            double worldX = (viewPoint.X - panX) / zoom;
+            double worldY = (viewPoint.Y - panY) / zoom;
+            return new System.Drawing.Point((int)worldX, (int)worldY);
+        }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Space)
+            //if (e.Key == Key.Space)
+            //{
+            //    (DataContext as DocumentVM)?.EnterEditModeCommand.Execute(null);
+            //    e.Handled = true;
+            //}
+            //else if (e.Key == Key.Escape)
+            //{
+            //    (DataContext as DocumentVM)?.ExitEditModeCommand.Execute(null);
+            //    e.Handled = true;
+            //}
+            if (e.Key == Key.Enter && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
-                (DataContext as DocumentVM)?.EnterEditModeCommand.Execute(null);
-                e.Handled = true;
-            }
-            else if (e.Key == Key.Escape)
-            {
-                (DataContext as DocumentVM)?.ExitEditModeCommand.Execute(null);
-                e.Handled = true;
+                // 1. 현재 윈도우의 클라이언트 영역 중앙(화면 좌표) 구하기
+                double winWidth = ActualWidth;
+                double winHeight = ActualHeight;
+
+                // Border, Margin 등이 있으면 World(Canvas)의 실제 화면 내 위치 계산 필요
+                // VisualTreeHelper를 활용한 변환
+                var relativeToWorld = World.TransformToAncestor(this)
+                    .Transform(new Point(0, 0));
+                double cx = relativeToWorld.X + World.ActualWidth / 2;
+                double cy = relativeToWorld.Y + World.ActualHeight / 2;
+
+                // 실제 화면 중앙좌표를 구한다면:
+                // var centerScreen = new Point(winWidth / 2, winHeight / 2);
+
+                // 여기서는 "화면 중앙" 기준. 스크롤이나 윈도우 사이즈에 따라 다르게 조정 가능
+                var center = new Point(winWidth / 2, winHeight / 2);
+
+                // 2. 화면 중앙을 월드좌표로 변환
+                var worldPos = ViewToWorld(center);
+
+                // 3. ViewModel에 명령 전달
+                if (DataContext is DocumentVM vm)
+                {
+                    if (vm.AddRootNodeAtCommand.CanExecute(worldPos))
+                    {
+                        vm.AddRootNodeAtCommand.Execute(worldPos);
+                        e.Handled = true;
+                    }
+                }
             }
         }
-
     }
 
 }

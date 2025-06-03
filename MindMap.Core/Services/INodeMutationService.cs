@@ -18,4 +18,6 @@ public interface INodeMutationService
     void MoveRootChildSide(NodeModel node);
 
     bool SetSide(NodeModel n, SideEnum side);
+
+    public Action<NodeModel, NodeModel>? OnReparent { get; set; }
 }

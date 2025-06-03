@@ -15,9 +15,12 @@ public interface ISelectionService
 
     // Use Select(null) to clear selection
     void Select(NodeModel? node);
+    void AddSelection(NodeModel node);
     void ExpandRange(Direction dir);        // Shift+↑/↓
     void Navigate(Direction dir);           // 화살표
     void RegisterParent(NodeModel child, NodeModel? parent);
+
+    void Remove(NodeModel node);  // 선택된 노드 제거
 
     public NodeModel? GetParent(NodeModel child);
 }

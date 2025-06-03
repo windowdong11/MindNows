@@ -55,6 +55,8 @@ public class NodeModel : INotifyPropertyChanged
         set => SetField(ref _imageSize, value);
     }
 
+    public Size OriginalImageSize { get; set; }
+
     private Size _desired;
     public Size Desired
     {
@@ -76,7 +78,22 @@ public class NodeModel : INotifyPropertyChanged
         set => SetField(ref _side, value);
     }
 
-    public ObservableCollection<NodeModel> Children { get; } = new();
+    private double _nodeWidth = 120; // 기본값 설정
+    public double NodeWidth
+    {
+        get => _nodeWidth;
+        set => SetField(ref _nodeWidth, value);
+    }
+
+    private double _nodeHeight = 48; // 기본값 설정
+    public double NodeHeight
+    {
+        get => _nodeHeight;
+        set => SetField(ref _nodeHeight, value);
+    }
+
+    // Never set Children in user's code.
+    public ObservableCollection<NodeModel> Children { get; set; } = new();
 
     // ───── INotifyPropertyChanged 헬퍼 ─────
     public event PropertyChangedEventHandler? PropertyChanged;

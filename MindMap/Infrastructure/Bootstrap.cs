@@ -26,6 +26,7 @@ public static class Bootstrap
         var sc = new ServiceCollection();
 
         // Singleton 서비스 등록
+        sc.AddSingleton<IFileDialogService, FileDialogService>();
         sc.AddSingleton<IClipboardService, ClipboardService>();
         sc.AddSingleton<IHitTestService, HitTestService>();
         sc.AddSingleton<ILayoutService, LayoutService>();

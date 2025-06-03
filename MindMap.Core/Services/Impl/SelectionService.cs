@@ -27,6 +27,22 @@ public sealed class SelectionService : ISelectionService
         Raise();
     }
 
+    public void AddSelection(NodeModel node)
+    {
+        if (Current == node) return;
+        if (Current is null)
+        {
+            Select(node);
+            return;
+        }
+        if (!_multi.Contains(node))
+        {
+            _multi.Add(node);
+        }
+        Current = node;
+        Raise();
+    }
+
     public void ExpandRange(Direction dir)
     {
         if (Current is null) return;
@@ -115,4 +131,20 @@ public sealed class SelectionService : ISelectionService
     => _parentMap.TryGetValue(child, out var p) ? p : null;
 
     private void Raise() => SelectionChanged?.Invoke(this, EventArgs.Empty);
+
+    public void Remove(NodeModel node)
+    {
+        if (node == null) return;
+        if (Current == node)
+        {
+            Current = null;  // 선택 해제
+            _multi.Clear();  // 멀티 선택 해제
+        }
+        else
+        {
+            _multi.Remove(node);
+        }
+        _parentMap.Remove(node);  // 부모 맵에서 제거
+        Raise();
+    }
 }

@@ -11,6 +11,8 @@ public sealed class NodeMutationService : INodeMutationService
 {
     private readonly ISelectionService _sel;
 
+    public Action<NodeModel, NodeModel>? OnReparent { get; set; }
+
     public NodeMutationService(ISelectionService sel) => _sel = sel;
 
     public bool MoveWithinSiblings(NodeModel node, int delta)
@@ -93,11 +95,10 @@ public sealed class NodeMutationService : INodeMutationService
     public bool SetSide(NodeModel n, SideEnum side)
     {
         if (n.Side == side) return false; // 변경 필요 없음
-        var result = false;
         n.Side = side;
         foreach (var child in n.Children)
-            result |= SetSide(child, side);       // 자식도 동일하게 설정
-        return result;
+            SetSide(child, side);       // 자식도 동일하게 설정
+        return true;
     }
 
     //public bool Reparent(NodeModel node, ReparentAction dir)
@@ -150,11 +151,14 @@ public sealed class NodeMutationService : INodeMutationService
         if (node is null || newParent is null) return false;
         // 현재 부모에서 제거
         var currentParent = _sel.GetParent(node);
+        if (newParent == currentParent) return false;
         if (currentParent is null)
         {
             // 루트 노드인 경우
             var root = node;
             var destSide = newParent.Side;
+            if (root.Side != destSide)
+                root.Side = destSide; // Side 변경
             // 자식 중 Side가 destSide와 다른 노드들은 순서를 마지막으로 바꿈.
             for (var i = 0; i < root.Children.Count; i++)
             {
@@ -166,6 +170,7 @@ public sealed class NodeMutationService : INodeMutationService
                     i--; // 인덱스 조정
                 }
             }
+            OnReparent?.Invoke(node, newParent); // 이벤트 발생
         }
         else
         {

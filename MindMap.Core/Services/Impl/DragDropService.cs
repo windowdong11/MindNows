@@ -79,11 +79,9 @@ public sealed class DragDropService : IDragDropService
         _state = _state with { HoverGap = sibgap, HoverAttachTarget = attach };
 
         bool changed = false;
-
         if (_hit.HitNode(pos) == null && _sel.GetParent(selRoot) == null)
         {
             // 빈 공간에 드랍: 루트 노드 이동
-            // -- 다음 단계에서 실제 구현 --
             var actualPos = new Point((int)(pos.X + _state.CursorOffset.X), (int)(pos.Y + _state.CursorOffset.Y)); // 클릭 위치 ↔ 루트 선택 중심
             selRoot.Position = actualPos;
             changed = true;
@@ -93,7 +91,13 @@ public sealed class DragDropService : IDragDropService
             //var dir = tgt.Side == SideEnum.Right
             //    ? ReparentAction.Right : ReparentAction.Left;
             //foreach (var n in selRoots)
-            if (selRoot != tgt)
+            if (selRoot == tgt)
+            {
+                var actualPos = new Point((int)(pos.X + _state.CursorOffset.X), (int)(pos.Y + _state.CursorOffset.Y)); // 클릭 위치 ↔ 루트 선택 중심
+                selRoot.Position = actualPos;
+                changed = true;
+            }
+            else
                 changed |= _mut.Reparent(selRoot, tgt);
         }
         else if (_state.HoverGap is { } gap)

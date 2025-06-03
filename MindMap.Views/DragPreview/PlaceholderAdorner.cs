@@ -36,7 +36,7 @@ public sealed class PlaceholderAdorner : PreviewAdornerBase
             g.parent.Children[placeholderIndex].Position.Y
             : g.parent.Position.Y;
         var x = g.parent.Side == SideEnum.Right
-              ? g.parent.Position.X + 120 + 48
+              ? g.parent.Position.X + g.parent.NodeWidth + 48
               : g.parent.Position.X - 16;
 
         var rect = new Rect(x, yTop, 120, 48);

@@ -27,9 +27,11 @@ public sealed class GhostAdorner : PreviewAdornerBase
         var sel = DragSvc.State.Selection;
         var offset = DragSvc.State.CursorOffset;
         var pos = DragSvc.State.CurrentWorldPos;
+        var width = sel.NodeWidth;
+        var height = sel.NodeHeight;
 
         var w = new PointF(pos.X + offset.X, pos.Y + offset.Y);
-        var rect = new Rect(ToVisual(w), new Size(120, 48));
+        var rect = new Rect(ToVisual(w), new Size(width, height));
         dc.DrawRoundedRectangle(Fill, null, rect, 6, 6);
         //foreach (var n in sel)
         //{

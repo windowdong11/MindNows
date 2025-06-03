@@ -8,33 +8,94 @@
              xmlns:vm="clr-namespace:MindMap.ViewModels;assembly=MindMap.ViewModels"
              mc:Ignorable="d"
              xmlns:behaviors="clr-namespace:MindMap.Views.Behaviors"
-             Width="Auto" Height="Auto">
+             Width="Auto" Height="Auto" d:DesignWidth="96">
     <UserControl.Resources>
         <conv:ImagePathToBitmapConverter x:Key="PathToBitmap"/>
-        <conv:BoolToBrushConverter      x:Key="BoolToBrush"
-                                    TrueBrush="#000"/>
+        <conv:BoolToBrushConverter x:Key="BoolToBrush">
+            <conv:BoolToBrushConverter.TrueBrush>
+                <SolidColorBrush Color="#bcd2f5FF"/>
+            </conv:BoolToBrushConverter.TrueBrush>
+            <conv:BoolToBrushConverter.FalseBrush>
+                <SolidColorBrush Color="Transparent"/>
+            </conv:BoolToBrushConverter.FalseBrush>
+        </conv:BoolToBrushConverter>
+        <conv:BoolToBrushConverter x:Key="BoolToRootBrush">
+            <conv:BoolToBrushConverter.TrueBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#aaa" Offset="0.0" />
+                    <GradientStop Color="#55e7fa" Offset="0.2" />
+                    <GradientStop Color="#55e7fa" Offset="0.8" />
+                    <GradientStop Color="#aaa" Offset="1.0" />
+                </LinearGradientBrush>
+            </conv:BoolToBrushConverter.TrueBrush>
+            <conv:BoolToBrushConverter.FalseBrush>
+                <SolidColorBrush Color="#aaa"/>
+            </conv:BoolToBrushConverter.FalseBrush>
+        </conv:BoolToBrushConverter>
+
         <conv:RefEqualsToVisibilityConverter x:Key="RefEqualsToVisibility"/>
         <conv:RefNotEqualsToVisibilityConverter x:Key="RefNotEqualsToVisibility"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <conv:ReverseBoolToVisibilityConverter x:Key="ReverseBoolToVisibility"/>
+        <conv:SideToHorizontalAlignmentConverter x:Key="SideToHorizontalAlignmentConverter"/>
     </UserControl.Resources>
-    <StackPanel>
+    <Grid>
         <!-- ───── 노드 본체 ───── -->
-        <Border CornerRadius="8" Padding="8" Margin="4"
+        <Border x:Name="NodeBorder"
                 BorderBrush="{Binding IsSelected, Converter={StaticResource BoolToBrush}}"
-                Background="#FFF" BorderThickness="3">
-            <StackPanel>
-                <Image Source="{Binding ImagePath,
-                Converter={StaticResource PathToBitmap}}"
-                   Width="120" Height="Auto"/>
+                CornerRadius="8" Padding="8" Margin="0"
+                Background="#FFF" BorderThickness="3"
+                Width="{Binding NodeWidth}"
+                Height="{Binding NodeHeight}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- 위 공간 -->
+                    <RowDefinition/>
+                    <!-- 텍스트박스/텍스트블록 -->
+                </Grid.RowDefinitions>
+                <Grid HorizontalAlignment="Center" Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 왼쪽 Thumb -->
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 이미지 -->
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 오른쪽 Thumb -->
+                    </Grid.ColumnDefinitions>
 
-                <!--<TextBlock Text="{Binding Text}"
-                       TextWrapping="Wrap"
-                       FontSize="14"
-                       HorizontalAlignment="Center" />-->
-                <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    <!-- 왼쪽 Thumb -->
+                    <Thumb Grid.Column="0"
+                           Width="8" Height="20"
+                           Visibility="{Binding ImageSectionVisibility, Converter={StaticResource BoolToVisibility}}"
+                           HorizontalAlignment="Left" VerticalAlignment="Center"
+                           DragDelta="Thumb_DragDelta_Left"
+                           Cursor="SizeWE"
+                           Background="LightGray"/>
+
+                    <Image Grid.Column="1"
+                           Source="{Binding ImagePath, Converter={StaticResource PathToBitmap}}"
+                           Width="{Binding ImageSize.Width}"
+                           Height="Auto"
+                           Stretch="Fill"/>
+                    <!-- 오른쪽 Thumb -->
+                    <Thumb Grid.Column="2"
+                           Width="8" Height="20"
+                           Visibility="{Binding ImageSectionVisibility, Converter={StaticResource BoolToVisibility}}"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DragDelta="Thumb_DragDelta_Right"
+                           Cursor="SizeWE"
+                           Background="LightGray"/>
+                </Grid>
+                <TextBox Grid.Row="1" HorizontalAlignment="Center"
+                         FontFamily="나눔스퀘어 네오 OTF"
+                         FontWeight="Regular"
+                         FontSize="14"
+                         Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          AcceptsReturn="True"
-                         IsVisibleChanged="EditBox_IsVisibleChanged">
-                    <!--TextWrapping="Wrap"-->
-                    <!--FocusManager.FocusedElement="{Binding RelativeSource={RelativeSource Self}}"-->
+                         IsVisibleChanged="EditBox_IsVisibleChanged"
+                         TextWrapping="Wrap"
+                         TextChanged="TextBox_TextChanged">
                     <TextBox.Visibility>
                         <MultiBinding Converter="{StaticResource RefEqualsToVisibility}">
                             <!-- 편집 중인 노드 -->
@@ -44,7 +105,12 @@
                         </MultiBinding>
                     </TextBox.Visibility>
                 </TextBox>
-                <TextBlock Text="{Binding Text}">
+                <TextBlock Grid.Row="1" HorizontalAlignment="Center"
+                           Text="{Binding Text}"
+                           FontFamily="나눔스퀘어 네오 OTF"
+                           FontWeight="Regular"
+                           FontSize="14"
+                           TextWrapping="Wrap">
                     <TextBlock.Visibility>
                         <MultiBinding Converter="{StaticResource RefNotEqualsToVisibility}">
                             <Binding Path="DataContext.EditingNode" RelativeSource="{RelativeSource AncestorType=Window}" />
@@ -52,24 +118,37 @@
                         </MultiBinding>
                     </TextBlock.Visibility>
                 </TextBlock>
-            </StackPanel>
+            </Grid>
         </Border>
-
-        <!-- ───── 자식 노드 렌더 ───── -->
-        <!--<ItemsControl ItemsSource="{Binding Children}">
-            <ItemsControl.ItemTemplate>
-                --><!-- NodeVM → 다시 NodeView (재귀) --><!--
-                <DataTemplate DataType="{x:Type vm:NodeVM}">
-                    <local:NodeView/>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-
-            --><!-- 간단한 들여쓰기용 --><!--
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Margin="24,0,0,0"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-        </ItemsControl>-->
-    </StackPanel>
+        <Thumb Width="12" Height="12"
+           Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibility}}"
+           HorizontalAlignment="Right"
+           VerticalAlignment="Top"
+           DragDelta="NodeSizeThumb_DragDelta"
+           DragCompleted="NodeSizeThumb_DragCompleted"
+           Cursor="SizeWE"
+           Background="LightBlue"
+           Margin="0,-6,-6,0"/>
+        <!--3.4-->
+        <Rectangle Height="6"
+               VerticalAlignment="Bottom"
+               HorizontalAlignment="Center"
+               Width="{Binding NodeWidth}"
+               Fill="{Binding IsRoot, Converter={StaticResource BoolToRootBrush}}"
+               Visibility="{Binding IsRoot, Converter={StaticResource BoolToVisibility}}"
+               Margin="0,0,0,-3"
+               Grid.ZIndex="-1"
+                   RadiusX="10"
+                   RadiusY="10"/>
+        <Rectangle Height="3.4"
+           VerticalAlignment="Bottom"
+           HorizontalAlignment="Center"
+           Width="{Binding NodeWidth}"
+           Fill="#aaa"
+               Visibility="{Binding IsRoot, Converter={StaticResource ReverseBoolToVisibility}}"
+           Margin="0,0,0,-1.7"
+           Grid.ZIndex="-1"
+               RadiusX="1.7"
+               RadiusY="1.7"/>
+    </Grid>
 </UserControl>
