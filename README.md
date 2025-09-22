@@ -1,7 +1,9 @@
 # MindMap
 
 단축키 편의성에 초점을 맞춘 마인드맵 툴
-MindNode에서 영감을 많이 받았지만, Windows에서는 이정도 편의성을 갖춘 툴이 없음. ㅠㅠ
+MindNode에서 영감을 많이 받았지만, Windows에서는 이정도 편의성을 갖춘 툴이 없음.
+
+!(예시 이미지)[./mindmap_roadmap.png]
 
 ## 단축키
 
