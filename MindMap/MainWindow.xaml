@@ -43,9 +43,9 @@
         <KeyBinding Key="Right" Modifiers="Ctrl"
             Command="{Binding ReparentCommand}"
             CommandParameter="{x:Static core:ReparentAction.Right}" />
-        <KeyBinding Key="Enter"
-                    Command="{Binding AddChildCommand}"/>
         <KeyBinding Key="Tab"
+                    Command="{Binding AddChildCommand}"/>
+        <KeyBinding Key="Enter"
                     Command="{Binding AddSiblingCommand}"/>
         <KeyBinding Key="L" Modifiers="Ctrl"
                     Command="{Binding EnterArrowModeCommand}"/>
