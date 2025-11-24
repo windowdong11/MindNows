@@ -286,8 +286,7 @@ public partial class DocumentVM : ObservableObject
             // 뷰 갱신
             BuildEdgesAndLayout();
 
-            // 새 노드 선택
-            _sel.Select(newNode);
+            SelectAndEditNode(newNode);
         }, () => !IsEditing && _sel.Current != null);
         AddSiblingCommand = new RelayCommand(() =>
         {
@@ -306,8 +305,7 @@ public partial class DocumentVM : ObservableObject
             _sel.RegisterParent(newNode, parent);
             // 뷰 갱신
             BuildEdgesAndLayout();
-            // 새 노드 선택
-            _sel.Select(newNode);
+            SelectAndEditNode(newNode);
         }, () => !IsEditing && _sel.Current != null);
         _mut.OnReparent += (node, newParent) =>
         {
@@ -329,6 +327,18 @@ public partial class DocumentVM : ObservableObject
         _sel.RegisterParent(node, parent);
         foreach (var child in node.Children)
             BuildParentMap(child, node);
+    }
+
+    private void SelectAndEditNode(NodeModel newNode)
+    {
+        var newNodeVM = AllNodes.FirstOrDefault(n => n.Model == newNode);
+
+        _sel.Select(newNode);
+
+        if (newNodeVM is not null)
+        {
+            EditingNode = newNodeVM;
+        }
     }
 
     public void RefreshLayout()
